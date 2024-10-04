@@ -1,9 +1,9 @@
-TARGET=main
+TARGET=main3
 
 PREF_OBJ=build
 PREF_SRC=src
 
-SRC=src/main.c
+SRC=src/main3.c
 OBJ=$(patsubst $(PREF_SRC)/%.c, $(PREF_OBJ)/%.o, $(SRC))
 
 LFLAGS=-lpthread

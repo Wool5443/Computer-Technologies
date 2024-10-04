@@ -16,7 +16,7 @@ void* my_thread(void* dummy)
     return NULL;
 }
 
-#define NUM_OF_THREADS 1000000
+#define NUM_OF_THREADS 90000
 int main()
 {
     pthread_t threads[NUM_OF_THREADS] = {};
