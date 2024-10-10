@@ -1,24 +1,8 @@
 #ifndef INPUT_FILES_H
 #define INPUT_FILES_H
 
-#include <time.h>
-#include <stddef.h>
+#include "Commands.h"
 #include "Error.h"
-
-typedef struct
-{
-    const char* command;
-    time_t      delay;
-} Command;
-
-typedef struct
-{
-    Command* commands;
-    size_t   size;
-    /*----------------*/
-    char*    m_buffer;
-    /*----------------*/
-} CommandList;
 
 DECLARE_RESULT(CommandList);
 
