@@ -25,6 +25,9 @@ typedef struct                                      \
     Type value;                                     \
 } Result ## Type
 
+#define ERROR_CHECKING()                            \
+    ErrorCode err __attribute__((unused)) = EVERYTHING_FINE;
+
 #define RETURN(retval, err)                         \
 do                                                  \
 {                                                   \
