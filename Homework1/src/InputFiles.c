@@ -19,7 +19,7 @@ ResultCommandList CommandListCtor(const char filePath[static 1])
 {
     assert(filePath);
 
-    ErrorCode err __attribute__((unused)) = EVERYTHING_FINE;
+    ERROR_CHECKING();
 
     FILE*    file   = NULL;
     char*    buffer = NULL;
@@ -29,7 +29,7 @@ ResultCommandList CommandListCtor(const char filePath[static 1])
     if (!file)
     {
         err = ERROR_BAD_FILE;
-        goto errorCleanup;
+        goto cleanup;
     }
 
     size_t size = fileSize(fileno(file));
@@ -38,7 +38,7 @@ ResultCommandList CommandListCtor(const char filePath[static 1])
     if (!buffer)
     {
         err = ERROR_NO_MEMORY;
-        goto errorCleanup;
+        goto cleanup;
     }
 
     fread(buffer, 1, size, file);
@@ -50,7 +50,7 @@ ResultCommandList CommandListCtor(const char filePath[static 1])
     if (!list)
     {
         err = ERROR_NO_MEMORY;
-        goto errorCleanup;
+        goto cleanup;
     }
 
     char* bufferPtr = strtok(buffer, "\n");
@@ -78,7 +78,7 @@ ResultCommandList CommandListCtor(const char filePath[static 1])
         },
     };
 
-errorCleanup:
+cleanup:
     fclose(file);
     free(buffer);
     free(list);
