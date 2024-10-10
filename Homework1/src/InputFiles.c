@@ -72,8 +72,8 @@ ResultCommandList CommandListCtor(const char filePath[static 1])
     return (ResultCommandList) {
         .error = EVERYTHING_FINE,
         .value = (CommandList) {
-            .commands = list,
             .size = lines,
+            .commands = list,
             .m_buffer = buffer,
         },
     };

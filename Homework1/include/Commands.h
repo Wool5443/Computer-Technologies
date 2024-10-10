@@ -11,8 +11,8 @@ typedef struct
 
 typedef struct
 {
-    Command* commands;
     size_t   size;
+    Command* commands;
     /*----------------*/
     char*    m_buffer;
     /*----------------*/
