@@ -50,5 +50,7 @@ int main(int argc, const char* argv[])
 cleanup:
     CommandListDtor(&commands);
     SchedulerDtor(&scheduler);
+    if (err == EVERYTHING_FINE)
+        return EVERYTHING_FINE;
     RETURN(err, err);
 }
