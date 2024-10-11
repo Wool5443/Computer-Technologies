@@ -6,6 +6,8 @@
 #include "Scheduler.h"
 #include "Error.h"
 
+time_t StartTime = 0;
+
 void* execCommandThreadFunc(void* arg)
 {
     assert(arg);
@@ -14,7 +16,12 @@ void* execCommandThreadFunc(void* arg)
 
     sleep(cmd.delay);
 
-    printf("Running command %s after delay %d with args:\n", cmd.command, cmd.delay);
+    double waitTime = difftime(time(NULL), StartTime);
+
+    printf("----------------------------------------------\n"
+           "Waited for %g seconds\n"
+           "Running command %s after delay %d with args:\n",
+           waitTime, cmd.command, cmd.delay);
     for (size_t i = 0; i < MAX_ARGS; i++)
     {
         if (cmd.args[i])
@@ -27,7 +34,7 @@ void* execCommandThreadFunc(void* arg)
     {
         execvp(cmd.command, cmd.args);
     }
-    printf("Has run command %s after delay %d\n", cmd.command, cmd.delay);
+    printf("Has run command %s after delay %d\n\n", cmd.command, cmd.delay);
 
     return NULL;
 }
@@ -35,6 +42,8 @@ void* execCommandThreadFunc(void* arg)
 ResultScheduler SchedulerCtor(size_t size)
 {
     ERROR_CHECKING();
+
+    StartTime = time(NULL);
 
     pthread_t* cmdThreads = NULL;
 
