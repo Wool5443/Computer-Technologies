@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <assert.h>
+#include <sys/wait.h>
 #include "Scheduler.h"
 #include "Error.h"
 
@@ -13,8 +14,19 @@ void* execCommandThreadFunc(void* arg)
 
     sleep(cmd.delay);
 
-    printf("Running command %s after delay %d\n", cmd.command, cmd.delay);
-    execv(cmd.command, (char* const*)cmd.command);
+    printf("Running command %s after delay %d with args:\n", cmd.command, cmd.delay);
+    for (size_t i = 0; i < MAX_ARGS; i++)
+    {
+        if (cmd.args[i])
+            printf("%s\n", cmd.args[i]);
+    }
+
+    pid_t pid = fork();
+
+    if (pid == 0)
+    {
+        execvp(cmd.command, cmd.args);
+    }
     printf("Has run command %s after delay %d\n", cmd.command, cmd.delay);
 
     return NULL;

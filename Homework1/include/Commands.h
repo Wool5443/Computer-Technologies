@@ -3,10 +3,13 @@
 
 #include <stddef.h>
 
+#define MAX_ARGS 32
+
 typedef struct
 {
     const char* command;
     int         delay;
+    char*       args[MAX_ARGS + 1];
 } Command;
 
 typedef struct

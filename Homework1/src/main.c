@@ -40,7 +40,9 @@ int main(int argc, const char* argv[])
 
     for (size_t i = 0; i < commands.size; i++)
     {
-        ScheduleCommand(&scheduler, &commands.commands[i]);
+        err = ScheduleCommand(&scheduler, &commands.commands[i]);
+        if (err)
+            goto cleanup;
     }
 
     SchedulerJoin(&scheduler);

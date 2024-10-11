@@ -62,10 +62,32 @@ ResultCommandList CommandListCtor(const char filePath[static 1])
 
         sscanf(bufferPtr, "%d%n", &delay, &read);
 
-        list[i] = (Command){
+        bufferPtr += read + 1;
+        Command cmd = {
             .delay = delay,
-            .command = bufferPtr + read + 1,
+            .command = bufferPtr,
+            .args[0] = bufferPtr,
         };
+
+        fprintf(stderr, "%s\n", bufferPtr);
+
+        char* argPtr = strchr(bufferPtr, ' ');
+        size_t argIndex = 1;
+
+        while (argPtr)
+        {
+            if (argIndex == MAX_ARGS)
+            {
+                err = ERROR_INDEX_OUT_OF_BOUNDS;
+                goto cleanup;
+            }
+
+            *(argPtr++) = '\0';
+            cmd.args[argIndex++] = argPtr;
+            argPtr = strchr(argPtr, ' ');
+        }
+
+        list[i] = cmd;
 
         bufferPtr = strtok(NULL, "\n");
     }

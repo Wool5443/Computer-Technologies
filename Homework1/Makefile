@@ -26,6 +26,10 @@ $(PREF_OBJ)%.o : $(PREF_SRC)%.c
 dirs:
 	@mkdir -p $(PREF_OBJ)
 
+.PHONEY : cleanOutput
+cleanOutput:
+	rm a b c d
+
 .PHONY : clean
 clean:
 	@rm $(PREF_OBJ)* $(EXE)
