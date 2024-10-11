@@ -48,7 +48,6 @@ ResultCommandList CommandListCtor(const char filePath[static 1])
     size_t lines = countLines(buffer);
 
     list = (Command*)calloc(lines, sizeof(*list));
-    list = NULL;
     if (!list)
     {
         err = ERROR_NO_MEMORY;

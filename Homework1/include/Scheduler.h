@@ -15,7 +15,7 @@ typedef struct
 DECLARE_RESULT(Scheduler);
 
 ResultScheduler SchedulerCtor(size_t size);
-ResultScheduler SchedulerDtor(Scheduler scheduler[static 1]);
+void            SchedulerDtor(Scheduler scheduler[static 1]);
 
 ErrorCode ScheduleCommand(Scheduler scheduler[static 1],
                           Command command[static 1]);

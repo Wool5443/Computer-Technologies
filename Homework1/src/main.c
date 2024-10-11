@@ -11,17 +11,42 @@ int main(int argc, const char* argv[])
         return -1;
     }
 
-    ResultCommandList commandsRes = CommandListCtor(argv[1]);
-    RETURN_ERROR_IF(commandsRes.error);
+    ERROR_CHECKING();
+    CommandList commands = {};
+    Scheduler scheduler = {};
 
-    CommandList commands = commandsRes.value;
+    ResultCommandList commandsRes = CommandListCtor(argv[1]);
+    if (commandsRes.error)
+    {
+        err = commandsRes.error;
+        goto cleanup;
+    }
+
+    commands = commandsRes.value;
 
     for (size_t i = 0; i < commands.size; i++)
     {
-        printf("delay = %d command = <%s>\n", (int)commands.commands[i].delay, commands.commands[i].command);
+        printf("delay = %d command = <%s>\n", commands.commands[i].delay, commands.commands[i].command);
     }
 
-    CommandListDtor(&commands);
+    ResultScheduler schedulerRes = SchedulerCtor(commands.size);
+    if (schedulerRes.error)
+    {
+        err = schedulerRes.error;
+        goto cleanup;
+    }
 
-    return 0;
+    scheduler = schedulerRes.value;
+
+    for (size_t i = 0; i < commands.size; i++)
+    {
+        ScheduleCommand(&scheduler, &commands.commands[i]);
+    }
+
+    SchedulerJoin(&scheduler);
+
+cleanup:
+    CommandListDtor(&commands);
+    SchedulerDtor(&scheduler);
+    RETURN(err, err);
 }

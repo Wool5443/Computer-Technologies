@@ -13,7 +13,9 @@ void* execCommandThreadFunc(void* arg)
 
     sleep(cmd.delay);
 
+    printf("Running command %s after delay %d\n", cmd.command, cmd.delay);
     execv(cmd.command, (char* const*)cmd.command);
+    printf("Has run command %s after delay %d\n", cmd.command, cmd.delay);
 
     return NULL;
 }
@@ -46,6 +48,13 @@ cleanup:
 
     ResultScheduler res = { err, {} };
     RETURN(res, err);
+}
+
+void SchedulerDtor(Scheduler scheduler[static 1])
+{
+    assert(scheduler);
+
+    free(scheduler->threads);
 }
 
 ErrorCode ScheduleCommand(Scheduler scheduler[static 1], Command command[static 1])
