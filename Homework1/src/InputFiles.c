@@ -9,8 +9,10 @@
 size_t countLines(const char text[static 1]);
 size_t fileSize(int fd);
 
-void CommandListDtor(CommandList* list)
+void CommandListDtor(CommandList list[static 1])
 {
+    assert(list);
+
     free(list->commands);
     free(list->m_buffer);
 }
