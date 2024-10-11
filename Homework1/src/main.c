@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "InputFiles.h"
+#include "Scheduler.h"
 
 int main(int argc, const char* argv[])
 {

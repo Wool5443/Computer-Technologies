@@ -8,14 +8,18 @@
 typedef struct
 {
     size_t     size;
-    pthread_t* cmdThreads;
+    pthread_t* threads;
     size_t     currentThread;
 } Scheduler;
 
 DECLARE_RESULT(Scheduler);
 
 ResultScheduler SchedulerCtor(size_t size);
+ResultScheduler SchedulerDtor(Scheduler scheduler[static 1]);
 
-ErrorCode ScheduleCommand(Scheduler* scheduler, Command* command);
+ErrorCode ScheduleCommand(Scheduler scheduler[static 1],
+                          Command command[static 1]);
+
+ErrorCode SchedulerJoin(Scheduler scheduler[static 1]);
 
 #endif // SCHEDULER_H

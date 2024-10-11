@@ -36,7 +36,7 @@ ResultScheduler SchedulerCtor(size_t size)
         .error = EVERYTHING_FINE,
         .value = {
             .size = size,
-            .cmdThreads = cmdThreads,
+            .threads = cmdThreads,
             .currentThread = 0,
         }
     };
@@ -48,12 +48,12 @@ cleanup:
     RETURN(res, err);
 }
 
-ErrorCode ScheduleCommand(Scheduler* scheduler, Command* command)
+ErrorCode ScheduleCommand(Scheduler scheduler[static 1], Command command[static 1])
 {
     assert(scheduler);
-    Scheduler sch = *scheduler;
+    assert(command);
 
-    if (sch.currentThread == sch.size)
+    if (scheduler->currentThread == scheduler->size)
     {
         RETURN_ERROR_IF(ERROR_INDEX_OUT_OF_BOUNDS);
     }
@@ -66,5 +66,27 @@ ErrorCode ScheduleCommand(Scheduler* scheduler, Command* command)
         RETURN_ERROR_IF(ERROR_BAD_THREAD);
     }
 
+    scheduler->threads[scheduler->currentThread++] = newThread;
+
     return EVERYTHING_FINE;
+}
+
+ErrorCode SchedulerJoin(Scheduler scheduler[static 1])
+{
+    assert(scheduler);
+
+    ERROR_CHECKING();
+
+    pthread_t* threads = scheduler->threads;
+
+    for (size_t i = 0, end = scheduler->currentThread; i < end; i++)
+    {
+        if (pthread_join(threads[i], NULL) != EVERYTHING_FINE)
+        {
+            fprintf(stderr, "%s\n", GetErrorName(ERROR_BAD_THREAD));
+            err = ERROR_BAD_THREAD;
+        }
+    }
+
+    return err;
 }
