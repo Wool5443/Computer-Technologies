@@ -18,10 +18,10 @@ void* execCommandThreadFunc(void* arg)
 
     double waitTime = difftime(time(NULL), StartTime);
 
-    printf("----------------------------------------------\n"
-           "Waited for %g seconds\n"
-           "Running command %s after delay %d with args:\n",
+    printf("Waited for %g seconds\n"
+           "Running command %s with delay %d with args:\n",
            waitTime, cmd.command, cmd.delay);
+
     for (size_t i = 0; i < MAX_ARGS; i++)
     {
         if (cmd.args[i])
@@ -34,7 +34,7 @@ void* execCommandThreadFunc(void* arg)
     {
         execvp(cmd.command, cmd.args);
     }
-    printf("Has run command %s after delay %d\n\n", cmd.command, cmd.delay);
+    printf("Has run command %s with delay %d\n\n", cmd.command, cmd.delay);
 
     return NULL;
 }
