@@ -1,6 +1,7 @@
 CompileFlags:
   Add: [
     -std=gnu17,
+    -I./include/,
     -xc,
     -Wall,
     -Wextra,
