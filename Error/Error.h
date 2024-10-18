@@ -26,25 +26,43 @@ typedef struct                                      \
 } Result ## Type
 
 #define ERROR_CHECKING()                            \
-    ErrorCode err __attribute__((unused)) = EVERYTHING_FINE;
+    ErrorCode err __attribute__((unused)) = EVERYTHING_FINE
 
-#define RETURN(retval, err)                         \
-do                                                  \
-{                                                   \
-    fprintf(stderr, "%s in %s:%zu in %s\n",         \
-            GetErrorName(err),                      \
-            __FILE__,                               \
-            (size_t)__LINE__,                       \
-            __PRETTY_FUNCTION__                     \
-           );                                       \
-    return retval;                                  \
-} while (0)
+#define LOG(...) fprintf(stderr, __VA_ARGS__)
 
-#define RETURN_ERROR_IF(err)                        \
+#define LOG_IF_ERROR()                              \
 do                                                  \
 {                                                   \
     if (err)                                        \
-        RETURN(err, err);                           \
+        fprintf(stderr, "%s in %s:%zu in %s\n",     \
+                GetErrorName(err),                  \
+                __FILE__,                           \
+                (size_t)__LINE__,                   \
+                __PRETTY_FUNCTION__                 \
+               );                                   \
+} while (0)
+
+#define RETURN(retval)                              \
+do                                                  \
+{   LOG_IF_ERROR();                                 \
+    return retval;                                  \
+} while (0)
+
+#define RETURN_ERROR_IF()                           \
+do                                                  \
+{                                                   \
+    if (err)                                        \
+        RETURN(err);                                \
+} while (0)
+
+#define RETURN_RESULT_IF(resultType)                \
+do                                                  \
+{                                                   \
+    if (err)                                        \
+    {                                               \
+        resultType _res_ = { err, {} };             \
+        RETURN(_res_);                              \
+    }                                               \
 } while (0)
 
 #endif // UTILS_H

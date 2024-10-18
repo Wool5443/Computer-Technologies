@@ -106,7 +106,7 @@ cleanup:
     free(buffer);
     free(list);
     ResultCommandList res = { err, {} };
-    RETURN(res, err);
+    RETURN(res);
 }
 
 size_t countLines(const char text[static 1])

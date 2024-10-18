@@ -68,7 +68,7 @@ cleanup:
     free(cmdThreads);
 
     ResultScheduler res = { err, {} };
-    RETURN(res, err);
+    RETURN(res);
 }
 
 void SchedulerDtor(Scheduler scheduler[static 1])
@@ -83,9 +83,12 @@ ErrorCode ScheduleCommand(Scheduler scheduler[static 1], Command command[static 
     assert(scheduler);
     assert(command);
 
+    ERROR_CHECKING();
+
     if (scheduler->currentThread == scheduler->size)
     {
-        RETURN_ERROR_IF(ERROR_INDEX_OUT_OF_BOUNDS);
+        err = ERROR_INDEX_OUT_OF_BOUNDS;
+        RETURN_ERROR_IF();
     }
 
     pthread_t newThread = 0;
@@ -93,7 +96,8 @@ ErrorCode ScheduleCommand(Scheduler scheduler[static 1], Command command[static 
     if (pthread_create(&newThread, NULL, execCommandThreadFunc, command)
         != EVERYTHING_FINE)
     {
-        RETURN_ERROR_IF(ERROR_BAD_THREAD);
+        err = ERROR_BAD_THREAD;
+        RETURN_ERROR_IF();
     }
 
     scheduler->threads[scheduler->currentThread++] = newThread;
@@ -113,8 +117,8 @@ ErrorCode SchedulerJoin(Scheduler scheduler[static 1])
     {
         if (pthread_join(threads[i], NULL) != EVERYTHING_FINE)
         {
-            fprintf(stderr, "%s\n", GetErrorName(ERROR_BAD_THREAD));
             err = ERROR_BAD_THREAD;
+            LOG_IF_ERROR();
         }
     }
 

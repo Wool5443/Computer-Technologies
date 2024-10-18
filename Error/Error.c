@@ -8,7 +8,7 @@ const char* GetErrorName(ErrorCode err)
 #define DEF_ERROR(code) \
 case code: return #code;
 
-#include "ErrorGen.hpp"
+#include "ErrorGen.h"
 
 #undef DEF_ERROR
 

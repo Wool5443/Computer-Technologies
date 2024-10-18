@@ -12,6 +12,7 @@ int main(int argc, const char* argv[])
     }
 
     ERROR_CHECKING();
+
     CommandList commands = {};
     Scheduler scheduler = {};
 
@@ -50,7 +51,5 @@ int main(int argc, const char* argv[])
 cleanup:
     CommandListDtor(&commands);
     SchedulerDtor(&scheduler);
-    if (err == EVERYTHING_FINE)
-        return EVERYTHING_FINE;
-    RETURN(err, err);
+    RETURN(err);
 }
