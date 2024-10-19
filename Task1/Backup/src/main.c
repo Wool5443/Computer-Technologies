@@ -1,4 +1,5 @@
 #include "Backup.h"
+#include "ScratchBuf.h"
 
 int main(int argc, const char* argv[])
 {
@@ -12,11 +13,14 @@ int main(int argc, const char* argv[])
 
     Backupper backupper = {};
     FileList  list = {};
+    if ((err = ScratchBufInit(MAX_PATH_SIZE)))
+    {
+        goto cleanup;
+    }
 
     ResultBackupper backupperRes = BackupperCtor(argv[1], argv[2]);
-    if (backupperRes.error)
+    if ((err = backupperRes.error))
     {
-        err = backupperRes.error;
         LOG_IF_ERROR();
         goto cleanup;
     }
@@ -24,9 +28,8 @@ int main(int argc, const char* argv[])
     backupper = backupperRes.value;
 
     ResultFileList fileListRes = FileListCtor(&backupper);
-    if (fileListRes.error)
+    if ((err = fileListRes.error))
     {
-        err = fileListRes.error;
         LOG_IF_ERROR();
         goto cleanup;
     }

@@ -1,9 +1,11 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "ScratchBuf.h"
 #include "Backup.h"
 
 #define BAD_COUNT (size_t)-1
+#define MAX_PATH_SIZE 1024
 
 static void safeclosedir(DIR* dir);
 size_t countFiles(DIR* dir, const char** curFileSpot);
@@ -128,13 +130,12 @@ size_t countFiles(DIR* dir, const char** curFileSpot)
         else if (e->d_type == DT_DIR)
         {
             if (e->d_name[0] == '.') continue;
-
-            DIR* subdir = opendir(e->d_name);
+            DIR* subdir = opendir(NULL);
             if (!subdir)
             {
                 err = ERROR_BAD_FOLDER;
                 LOG_IF_ERROR();
-                LOG("Name = %s\n", e->d_name);
+                LOG("Name = %s\n", SCRATCH_PATH);
                 perror("OPENDIR ERROR\n");
                 return BAD_COUNT;
             }

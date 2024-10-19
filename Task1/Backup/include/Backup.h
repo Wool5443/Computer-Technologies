@@ -4,6 +4,8 @@
 #include <dirent.h>
 #include "Error.h"
 
+#define MAX_PATH_SIZE 4096
+
 typedef struct
 {
     DIR* backupDir;
