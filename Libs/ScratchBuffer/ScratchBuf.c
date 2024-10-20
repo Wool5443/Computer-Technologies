@@ -2,12 +2,12 @@
 #include <stdlib.h>
 #include "ScratchBuf.h"
 
-struct SScratchBuf_
+typedef struct
 {
     size_t size;
     size_t capacity;
     char*  data;
-};
+} ScratchBuf;
 
 static ScratchBuf scratchBuf = {};
 
@@ -48,12 +48,25 @@ void ScratchBufClean()
     scratchBuf.data[0] = '\0';
 }
 
-size_t ScratchBufSize()
+size_t ScratchGetSize()
 {
     return scratchBuf.size;
 }
 
-ErrorCode ScratchBufAppendChar(char c)
+ErrorCode ScratchSetSize(size_t size)
+{
+    if (size > scratchBuf.capacity) return ERROR_INDEX_OUT_OF_BOUNDS;
+    scratchBuf.size = size;
+    scratchBuf.data[size] = '\0';
+    return EVERYTHING_FINE;
+}
+
+char* ScratchGetStr()
+{
+    return scratchBuf.data;
+}
+
+ErrorCode ScratchAppendChar(char c)
 {
     ERROR_CHECKING();
     if (scratchBuf.size == scratchBuf.capacity)
@@ -67,7 +80,7 @@ ErrorCode ScratchBufAppendChar(char c)
     return err;
 }
 
-ErrorCode ScratchBufAppendSlice(StringSlice slice)
+ErrorCode ScratchAppendSlice(StringSlice slice)
 {
     ERROR_CHECKING();
 

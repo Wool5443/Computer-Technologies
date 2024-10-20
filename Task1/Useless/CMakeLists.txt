@@ -7,5 +7,7 @@ set(SOURCES
 )
 
 add_executable(${EXE} ${SOURCES})
-target_include_directories(${EXE} PRIVATE include PRIVATE ${PROJECT_ROOT}/Error)
+target_include_directories(${EXE}
+    PRIVATE include
+    PRIVATE ${LIBS_ROOT}/Error)
 target_link_libraries(${EXE} pthread m Error)

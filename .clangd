@@ -1,9 +1,9 @@
 CompileFlags:
   Add: [
     -std=gnu17,
-    -I./include/,
     -xc,
     -Wall,
     -Wextra,
   ]
   Compiler: clang
+  CompilationDatabase: build/

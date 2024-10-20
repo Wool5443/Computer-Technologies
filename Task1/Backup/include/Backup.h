@@ -8,15 +8,16 @@
 
 typedef struct
 {
-    DIR* backupDir;
-    DIR* storageDir;
-} Backupper;
-
-typedef struct
-{
     size_t       size;
     const char** files;
 } FileList;
+
+typedef struct
+{
+    const char* backupPath;
+    const char* storagePath;
+    FileList    fileList;
+} Backupper;
 
 DECLARE_RESULT(Backupper);
 DECLARE_RESULT(FileList);
@@ -25,7 +26,7 @@ ResultBackupper BackupperCtor(const char* backupFolder, const char* storageFolde
 void            BackupperDtor(Backupper* backupper);
 ErrorCode       BackupperVerify(const Backupper* backupper);
 
-ResultFileList  FileListCtor(const Backupper* backupper);
+ResultFileList  FileListCtor(const char* dir);
 void            FileListDtor(FileList* list);
 
 #endif

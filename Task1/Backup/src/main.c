@@ -27,20 +27,6 @@ int main(int argc, const char* argv[])
 
     backupper = backupperRes.value;
 
-    ResultFileList fileListRes = FileListCtor(&backupper);
-    if ((err = fileListRes.error))
-    {
-        LOG_IF_ERROR();
-        goto cleanup;
-    }
-
-    list = fileListRes.value;
-
-    for (size_t i = 0; i < list.size; i++)
-    {
-        printf("%s\n", list.files[i]);
-    }
-
 cleanup:
     FileListDtor(&list);
     BackupperDtor(&backupper);

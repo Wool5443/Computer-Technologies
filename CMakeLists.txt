@@ -13,9 +13,9 @@ set(CMAKE_C_FLAGS_DEBUG "\
 set(CMAKE_CXX_FLAGS_RELASE "-pthread -O3 -g -DNDEBUG -march=native -mavx512f")
 
 set(PROJECT_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
+set(LIBS_ROOT ${PROJECT_ROOT}/Libs)
 
-add_subdirectory(Error)
-add_subdirectory(ScratchBuffer)
+add_subdirectory(Libs)
 add_subdirectory(Task1)
 # add_subdirectory(Sem5)
 # add_subdirectory(Sem7)
