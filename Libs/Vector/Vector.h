@@ -68,10 +68,11 @@ INLINE MAYBE_UNUSED void* VecRealloc(void* vec, size_t elemSize)
     void* newVec = VecCtor(elemSize, newCap);
     if (!newVec) return vec;
 
-    memcpy(vec, newVec, elemSize * header->size);
+    memcpy(newVec, vec, elemSize * header->size);
 
     VHeader_* newHeader = GET_HEADER(newVec);
     *newHeader = *header;
+    free(header);
 
     return newVec;
 }

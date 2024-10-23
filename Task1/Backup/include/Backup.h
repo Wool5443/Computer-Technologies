@@ -6,11 +6,7 @@
 
 #define MAX_PATH_SIZE 4096
 
-typedef struct
-{
-    size_t       size;
-    const char** files;
-} FileList;
+typedef char** FileList;
 
 typedef struct
 {
@@ -20,13 +16,18 @@ typedef struct
 } Backupper;
 
 DECLARE_RESULT(Backupper);
-DECLARE_RESULT(FileList);
+
+typedef struct
+{
+    ErrorCode error;
+    FileList value;
+} ResultFileList;
 
 ResultBackupper BackupperCtor(const char* backupFolder, const char* storageFolder);
 void            BackupperDtor(Backupper* backupper);
 ErrorCode       BackupperVerify(const Backupper* backupper);
 
 ResultFileList  FileListCtor(const char* dir);
-void            FileListDtor(FileList* list);
+void            FileListDtor(FileList list);
 
 #endif

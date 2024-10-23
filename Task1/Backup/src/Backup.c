@@ -7,6 +7,8 @@
 #include "Vector.h"
 #include "Backup.h"
 
+#define MAX_FD 32
+#define LINUX_ERROR -1
 #define BAD_COUNT (size_t)-1
 
 static void safeclosedir(DIR* dir);
@@ -43,7 +45,7 @@ void BackupperDtor(Backupper* backupper)
 {
     assert(backupper);
 
-    FileListDtor(&backupper->fileList);
+    FileListDtor(backupper->fileList);
 }
 
 ErrorCode BackupperVerify(const Backupper* backupper)
@@ -57,35 +59,43 @@ ErrorCode BackupperVerify(const Backupper* backupper)
     return EVERYTHING_FINE;
 }
 
-int fileListFn(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf)
-{
-    static const char** fileNames = NULL;
-    if (typeflag == FTW_F)
-    {
-        VecAdd(fileNames, fpath);
-    }
-    return 0;
-}
+int fileListFn(const char *fpath, [[maybe_unused]] const struct stat *sb,
+               int typeflag, [[maybe_unused]] struct FTW *ftwbuf);
 
+static FileList fileNames = NULL;
 ResultFileList FileListCtor(const char* dir)
 {
     ERROR_CHECKING();
     assert(dir);
 
-    /* nftw */
+    if ((err = nftw(dir, fileListFn, MAX_FD, 0)))
+    {
+        LOG_IF_ERROR();
+        goto errorRet;
+    }
+
+    return (ResultFileList){ err, fileNames };
 
 errorRet:
+    FileListDtor(fileNames);
     return (ResultFileList){ err, {} };
 }
 
-void FileListDtor(FileList* list)
+void FileListDtor(FileList list)
 {
     assert(list);
-    free(list->files);
+
+    for (size_t i = 0, end = VecSize(list); i < end; i++)
+        free(list[i]);
+    VecDtor(list);
 }
 
-static void safeclosedir(DIR* dir)
+int fileListFn(const char *fpath, [[maybe_unused]] const struct stat *sb,
+               int typeflag, [[maybe_unused]] struct FTW *ftwbuf)
 {
-    if (dir)
-        closedir(dir);
+    if (typeflag == FTW_F)
+    {
+        VecAdd(fileNames, strdup(fpath));
+    }
+    return 0;
 }

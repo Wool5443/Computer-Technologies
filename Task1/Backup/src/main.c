@@ -1,3 +1,4 @@
+#include "Vector.h"
 #include "Backup.h"
 #include "ScratchBuf.h"
 
@@ -12,7 +13,6 @@ int main(int argc, const char* argv[])
     }
 
     Backupper backupper = {};
-    FileList  list = {};
     if ((err = ScratchBufInit(MAX_PATH_SIZE)))
     {
         goto cleanup;
@@ -27,8 +27,11 @@ int main(int argc, const char* argv[])
 
     backupper = backupperRes.value;
 
+    for (size_t i = 0, sz = VecSize(backupper.fileList); i < sz; i++)
+    {
+        printf("%s\n", backupper.fileList[i]);
+    }
 cleanup:
-    FileListDtor(&list);
     BackupperDtor(&backupper);
 
     return err;
