@@ -17,10 +17,15 @@ typedef struct
 } VHeader_;
 
 #define INLINE static inline
+#if defined(__GNUC__) || defined(__clang__)
+    #define MAYBE_UNUSED __attribute__((unused))
+#else
+    #define UNUSED
+#endif
 
 #define GET_HEADER(ptr) &((VHeader_*)(ptr))[-1]
 
-INLINE void* VecCtor(size_t elemSize, size_t capacity)
+INLINE MAYBE_UNUSED void* VecCtor(size_t elemSize, size_t capacity)
 {
     ERROR_CHECKING();
 
@@ -37,13 +42,13 @@ INLINE void* VecCtor(size_t elemSize, size_t capacity)
     return &header[1];
 }
 
-INLINE void VecDtor(void* vec)
+INLINE MAYBE_UNUSED void VecDtor(void* vec)
 {
     assert(vec);
     if (vec) free(GET_HEADER(vec));
 }
 
-INLINE size_t VecSize(void* vec)
+INLINE MAYBE_UNUSED size_t VecSize(void* vec)
 {
     assert(vec);
 
@@ -51,7 +56,7 @@ INLINE size_t VecSize(void* vec)
     return header->size;
 }
 
-INLINE void* VecRealloc(void* vec, size_t elemSize)
+INLINE MAYBE_UNUSED void* VecRealloc(void* vec, size_t elemSize)
 {
     if (!vec)
         return VecCtor(elemSize, DEFAULT_CAPACITY);
@@ -81,7 +86,7 @@ do                                                                              
     vec[header->size++] = value;                                                \
 } while (0)
 
-INLINE void VecPop(void* vec)
+INLINE MAYBE_UNUSED void VecPop(void* vec)
 {
     assert(vec);
 
