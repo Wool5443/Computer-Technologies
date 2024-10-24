@@ -23,13 +23,13 @@ typedef struct
     #define UNUSED
 #endif
 
-#define GET_HEADER(ptr) &((VHeader_*)(ptr))[-1]
+#define GET_HEADER(ptr) (&((VHeader_*)(ptr))[-1])
 
 INLINE MAYBE_UNUSED void* VecCtor(size_t elemSize, size_t capacity)
 {
     ERROR_CHECKING();
 
-    VHeader_* header = calloc(capacity + elemSize + sizeof(VHeader_), 1);
+    VHeader_* header = calloc(capacity * elemSize + sizeof(VHeader_), 1);
     if (!header)
     {
         err = ERROR_NO_MEMORY;
@@ -63,6 +63,9 @@ INLINE MAYBE_UNUSED void* VecRealloc(void* vec, size_t elemSize)
 
     VHeader_* header = GET_HEADER(vec);
 
+    if (header->size < header->capacity)
+        return vec;
+
     size_t newCap = header->capacity * 3 / 2;
 
     void* newVec = VecCtor(elemSize, newCap);
@@ -82,7 +85,7 @@ do                                                                              
 {                                                                               \
     void* temp = VecRealloc((vec), sizeof(*vec));                               \
     if (!temp) break;                                                           \
-    vec = temp;                                                                 \
+    (vec) = temp;                                                               \
     VHeader_* header = GET_HEADER(vec);                                         \
     vec[header->size++] = value;                                                \
 } while (0)

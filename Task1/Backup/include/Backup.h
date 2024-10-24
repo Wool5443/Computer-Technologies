@@ -1,12 +1,19 @@
 #ifndef BACKUP_H
+
 #define BACKUP_H
 
-#include <dirent.h>
+#include <time.h>
 #include "Error.h"
 
 #define MAX_PATH_SIZE 4096
 
-typedef char** FileList;
+typedef struct
+{
+    char* path;
+    time_t updateDate;
+} FileEntry;
+
+typedef FileEntry* FileList;
 
 typedef struct
 {

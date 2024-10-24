@@ -29,7 +29,8 @@ int main(int argc, const char* argv[])
 
     for (size_t i = 0, sz = VecSize(backupper.fileList); i < sz; i++)
     {
-        printf("%s\n", backupper.fileList[i]);
+        FileEntry ent = backupper.fileList[i];
+        printf("%s: %ld\n", ent.path, ent.updateDate);
     }
 cleanup:
     BackupperDtor(&backupper);

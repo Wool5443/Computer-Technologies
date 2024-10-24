@@ -11,8 +11,6 @@
 #define LINUX_ERROR -1
 #define BAD_COUNT (size_t)-1
 
-static void safeclosedir(DIR* dir);
-
 ResultBackupper BackupperCtor(const char* backupFolder, const char* storageFolder)
 {
     ERROR_CHECKING();
@@ -86,7 +84,7 @@ void FileListDtor(FileList list)
     assert(list);
 
     for (size_t i = 0, end = VecSize(list); i < end; i++)
-        free(list[i]);
+        free(list[i].path);
     VecDtor(list);
 }
 
@@ -95,7 +93,9 @@ int fileListFn(const char *fpath, [[maybe_unused]] const struct stat *sb,
 {
     if (typeflag == FTW_F)
     {
-        VecAdd(fileNames, strdup(fpath));
+        time_t updated = sb->st_mtim.tv_sec;
+        FileEntry fent = { strdup(fpath), updated };
+        VecAdd(fileNames, fent);
     }
     return 0;
 }
