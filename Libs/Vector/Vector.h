@@ -29,6 +29,9 @@ INLINE MAYBE_UNUSED void* VecCtor(size_t elemSize, size_t capacity)
 {
     ERROR_CHECKING();
 
+    assert(elemSize);
+    assert(capacity);
+
     VHeader_* header = calloc(capacity * elemSize + sizeof(VHeader_), 1);
     if (!header)
     {
@@ -44,13 +47,12 @@ INLINE MAYBE_UNUSED void* VecCtor(size_t elemSize, size_t capacity)
 
 INLINE MAYBE_UNUSED void VecDtor(void* vec)
 {
-    assert(vec);
     if (vec) free(GET_HEADER(vec));
 }
 
 INLINE MAYBE_UNUSED size_t VecSize(void* vec)
 {
-    assert(vec);
+    if (!vec) return 0;
 
     VHeader_* header = GET_HEADER(vec);
     return header->size;
@@ -92,7 +94,7 @@ do                                                                              
 
 INLINE MAYBE_UNUSED void VecPop(void* vec)
 {
-    assert(vec);
+    if (!vec) return;
 
     VHeader_* header = GET_HEADER(vec);
     header->size--;

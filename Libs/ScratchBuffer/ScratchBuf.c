@@ -69,6 +69,7 @@ char* ScratchGetStr()
 ErrorCode ScratchAppendChar(char c)
 {
     ERROR_CHECKING();
+
     if (scratchBuf.size == scratchBuf.capacity)
     {
         err = ERROR_INDEX_OUT_OF_BOUNDS;
@@ -84,7 +85,11 @@ ErrorCode ScratchAppendSlice(StringSlice slice)
 {
     ERROR_CHECKING();
 
-    if (!slice.data) return err;
+    if (!slice.data)
+    {
+        err = ERROR_NULLPTR;
+        RETURN(err);
+    }
 
     if (scratchBuf.size + slice.size > scratchBuf.capacity)
     {
