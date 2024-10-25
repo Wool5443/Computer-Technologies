@@ -38,6 +38,32 @@ void FileListDtor(FileList list)
     VecDtor(list);
 }
 
+int FileEntryCompare(const void* a, const void* b)
+{
+    if (!a || !b)
+        return -1;
+
+    FileEntry entA = *(FileEntry*)a;
+    FileEntry entB = *(FileEntry*)b;
+
+    int strdif = strcmp(entA.path, entB.path);
+
+    if (strdif != 0) return strdif;
+
+    return entA.updateDate - entB.updateDate;
+}
+
+FileEntry* FindFileEntry(const FileList fileList, FileEntry entry)
+{
+    assert(fileList);
+
+    for (size_t i = 0, end = VecSize(fileList); i < end; i++)
+        if (strcmp(fileList[i].path, entry.path))
+            return fileList + i;
+
+    return NULL;
+}
+
 int fileListFn(const char *fpath, [[maybe_unused]] const struct stat *sb,
                int typeflag, [[maybe_unused]] struct FTW *ftwbuf)
 {

@@ -23,4 +23,8 @@ typedef struct
 ResultFileList  FileListCtor(const char dir[static 1]);
 void            FileListDtor(FileList list);
 
+int             FileEntryCompare(const void* a, const void* b);
+
+FileEntry*      FindFileEntry(const FileList fileList, FileEntry entry);
+
 #endif
