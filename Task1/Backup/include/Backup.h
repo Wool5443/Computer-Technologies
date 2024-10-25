@@ -30,11 +30,11 @@ typedef struct
     FileList value;
 } ResultFileList;
 
-ResultBackupper BackupperCtor(const char* backupFolder, const char* storageFolder);
+ResultBackupper BackupperCtor(const char backupFolder[static 1], const char storageFolder[static 1]);
 void            BackupperDtor(Backupper* backupper);
 ErrorCode       BackupperVerify(const Backupper* backupper);
 
-ResultFileList  FileListCtor(const char* dir);
+ResultFileList  FileListCtor(const char dir[static 1]);
 void            FileListDtor(FileList list);
 
 #endif
