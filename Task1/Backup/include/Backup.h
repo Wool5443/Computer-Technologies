@@ -19,7 +19,8 @@ typedef struct
 {
     const char* backupPath;
     const char* storagePath;
-    FileList    fileList;
+    FileList    saveFileList;
+    FileList    storageFileList;
 } Backupper;
 
 DECLARE_RESULT(Backupper);

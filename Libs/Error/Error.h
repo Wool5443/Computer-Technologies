@@ -28,10 +28,9 @@ typedef struct                                      \
 #define ERROR_CHECKING()                            \
     ErrorCode err __attribute__((unused)) = EVERYTHING_FINE
 
-#define ERROR_CASE()                                \
-    ERROR_CASE:
+#define ERROR_CASE _ERROR_CASE_:;
 
-#define ERROR_LEAVE() goto ERROR_CASE
+#define ERROR_LEAVE() goto _ERROR_CASE_
 
 #define LOG(...) fprintf(stderr, __VA_ARGS__)
 
