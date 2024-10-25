@@ -102,3 +102,11 @@ ErrorCode ScratchAppendSlice(StringSlice slice)
 
     return err;
 }
+
+void ScratchBufPop()
+{
+    if (scratchBuf.size == 0) return;
+
+    scratchBuf.size--;
+    scratchBuf.data[scratchBuf.size] = '\0';
+}
