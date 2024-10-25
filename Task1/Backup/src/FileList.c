@@ -1,0 +1,51 @@
+#include <unistd.h>
+#define __USE_XOPEN_EXTENDED
+#include <ftw.h>
+
+#include "FileList.h"
+#include "Vector.h"
+
+int fileListFn(const char *fpath, [[maybe_unused]] const struct stat *sb,
+               int typeflag, [[maybe_unused]] struct FTW *ftwbuf);
+
+static FileList fileNames = NULL;
+ResultFileList FileListCtor(const char dir[static 1])
+{
+    ERROR_CHECKING();
+
+    assert(dir);
+
+    if (nftw(dir, fileListFn, MAX_FD, 0) != 0)
+    {
+        err = ERROR_BAD_FOLDER;
+        LOG_IF_ERROR();
+        ERROR_LEAVE();
+    }
+
+    return (ResultFileList){ err, fileNames };
+
+ERROR_CASE
+    FileListDtor(fileNames);
+    return (ResultFileList){ err, {} };
+}
+
+void FileListDtor(FileList list)
+{
+    if (!list) return;
+
+    for (size_t i = 0, end = VecSize(list); i < end; i++)
+        free(list[i].path);
+    VecDtor(list);
+}
+
+int fileListFn(const char *fpath, [[maybe_unused]] const struct stat *sb,
+               int typeflag, [[maybe_unused]] struct FTW *ftwbuf)
+{
+    if (typeflag == FTW_F)
+    {
+        time_t updated = sb->st_mtim.tv_sec;
+        FileEntry fent = { strdup(fpath), updated };
+        VecAdd(fileNames, fent);
+    }
+    return 0;
+}

@@ -3,6 +3,7 @@ set(EXE backup)
 set(SOURCES
     "src/main.c"
     "src/Backup.c"
+    "src/FileList.c"
 )
 
 add_executable(${EXE} ${SOURCES})
