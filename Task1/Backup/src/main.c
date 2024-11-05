@@ -27,10 +27,10 @@ int main(int argc, const char* argv[])
 
     backupper = backupperRes.value;
 
-    for (size_t i = 0, sz = VecSize(backupper.saveFileList); i < sz; i++)
+    if ((err = Backup(&backupper)))
     {
-        FileEntry ent = backupper.saveFileList[i];
-        printf("%s: %ld\n", ent.path, ent.updateDate);
+        LOG_IF_ERROR();
+        goto cleanup;
     }
 cleanup:
     BackupperDtor(&backupper);

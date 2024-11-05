@@ -1,6 +1,9 @@
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
+#include <sys/stat.h>
 
+#include "FileList.h"
 #include "ScratchBuf.h"
 #include "Vector.h"
 #include "Backup.h"
@@ -9,11 +12,9 @@
 #define BAD_COUNT (size_t)-1
 #define BACKUP_TABLE_NAME ".backTable"
 
-static ResultFileList readBackupTable (const char backupTablePath[static 1]);
-static void           writeBackupTable(const char backupTablePath[static 1], FileList fileList);
-static void           safeclose(FILE* file);
+static void safeclose(FILE file[static 1]);
 
-static void           copyAndZip(const char dest[static 1], const char src[static 1]);
+static void copyAndZip(const char src[static 1]);
 
 ResultBackupper BackupperCtor(const char backupFolder[static 1], const char storageFolder[static 1])
 {
@@ -22,50 +23,61 @@ ResultBackupper BackupperCtor(const char backupFolder[static 1], const char stor
     assert(backupFolder);
     assert(storageFolder);
 
-    FileList saveFileList    = NULL;
-    FileList storageFileList = NULL;
+    char* backupstr  = NULL;
+    char* storagestr = NULL;
 
-    ResultFileList saveFileListRes = FileListCtor(backupFolder);
+    StringSlice backupPath  = StringSliceCtor(backupFolder);
+    StringSlice storagePath = StringSliceCtor(storageFolder);
 
-    if ((err = saveFileListRes.error))
+    if (backupPath.data[backupPath.size - 1] != '/')
     {
+        ScratchBufClean();
+        ScratchAppendSlice(backupPath);
+        ScratchAppendChar('/');
+        backupstr = strdup(ScratchGetStr());
+    }
+    else
+    {
+        backupstr = strdup(backupFolder);
+    }
+
+    if (!backupstr)
+    {
+        err = ERROR_NO_MEMORY;
         LOG_IF_ERROR();
         ERROR_LEAVE();
     }
-    saveFileList = saveFileListRes.value;
 
-    ScratchBufClean();
-    ScratchAppendStr(storageFolder);
-    if (ScratchGetStr()[ScratchGetSize() - 1] != '/')
-        ScratchAppendChar('/');
-    ScratchAppendStr(BACKUP_TABLE_NAME);
-
-    ResultFileList storageFileListRes = readBackupTable(ScratchGetStr());
-    switch (storageFileListRes.error)
+    if (storagePath.data[storagePath.size - 1] != '/')
     {
-        case ERROR_NOT_FOUND:
-            break;
-        case EVERYTHING_FINE:
-            storageFileList = storageFileListRes.value;
-        default:
-            err = storageFileListRes.error;
-            LOG_IF_ERROR();
-            ERROR_LEAVE();
+        ScratchBufClean();
+        ScratchAppendSlice(storagePath);
+        ScratchAppendChar('/');
+        storagestr = strdup(ScratchGetStr());
+    }
+    else
+    {
+        storagestr = strdup(storageFolder);
+    }
+
+    if (!storagestr)
+    {
+        err = ERROR_NO_MEMORY;
+        LOG_IF_ERROR();
+        ERROR_LEAVE();
     }
 
     return (ResultBackupper) {
         err,
         {
-            .backupPath      = backupFolder,
-            .storagePath     = storageFolder,
-            .saveFileList    = saveFileList,
-            .storageFileList = storageFileList,
+            .backupPath  = backupstr,
+            .storagePath = storagestr,
         },
     };
 
 ERROR_CASE
-    FileListDtor(saveFileList);
-    FileListDtor(storageFileList);
+    free(backupstr);
+    free(storagestr);
     return (ResultBackupper){ err, {} };
 }
 
@@ -73,7 +85,8 @@ void BackupperDtor(Backupper* backupper)
 {
     if (!backupper) return;
 
-    FileListDtor(backupper->saveFileList);
+    free(backupper->backupPath);
+    free(backupper->storagePath);
 }
 
 ErrorCode BackupperVerify(const Backupper* backupper)
@@ -87,146 +100,112 @@ ErrorCode BackupperVerify(const Backupper* backupper)
     return EVERYTHING_FINE;
 }
 
-ErrorCode Backup(const Backupper backupper[static 1])
+ErrorCode Backup(Backupper backupper[static 1])
 {
+    ERROR_CHECKING();
+
     assert(backupper);
 
+    FileList filesToSaveList = NULL;
 
+    ResultFileList filesToSaveListRes = FileListCtor(backupper->backupPath);
+
+    if ((err = filesToSaveListRes.error))
+    {
+        LOG_IF_ERROR();
+        ERROR_LEAVE();
+    }
+
+    filesToSaveList = filesToSaveListRes.value;
+
+    LOG("size = %zu\n", VecSize(filesToSaveList));
+    for (size_t i = 0, sz = VecSize(filesToSaveList); i < sz; i++)
+    {
+        FileEntry ent = filesToSaveList [i];
+        printf("%s: %ld\n", ent.path, ent.updateDate);
+    }
+
+    for (size_t i = 0, end = VecSize(filesToSaveList); i < end; i++)
+    {
+        FileEntry  saveEntry    = filesToSaveList[i];
+        FileEntry* storageEntry = NULL;
+
+        ScratchBufClean();
+        ScratchAppendStr(backupper->storagePath);
+
+        char* filename = ScratchGetStr() + ScratchGetSize();
+
+        ScratchAppendStr(saveEntry.path);
+
+        char* dirchar = strchr(filename, '/');
+
+        while (dirchar)
+        {
+            *dirchar = '.';
+            dirchar = strchr(dirchar + 1, '/');
+        }
+
+        ScratchAppendStr(".tar.gz");
+        LOG("dest = %s\n", ScratchGetStr());
+
+        copyAndZip(saveEntry.path);
+
+        if (storageEntry)
+            storageEntry->updateDate = saveEntry.updateDate;
+        else
+            VecAdd(filesToSaveList, saveEntry);
+    }
 
     return EVERYTHING_FINE;
-}
-
-ResultFileList readBackupTable(const char backupTablePath[static 1])
-{
-    ERROR_CHECKING();
-
-    assert(backupTablePath);
-
-    FILE* backupFile = fopen(backupTablePath, "rb");
-    FileList backupList = NULL;
-
-    if (!backupFile)
-    {
-        err = ERROR_NOT_FOUND;
-        ERROR_LEAVE();
-    }
-
-    size_t tableSize = 0;
-    if (fread(&tableSize, sizeof(tableSize), 1, backupFile) != 0)
-    {
-        err = ERROR_BAD_FILE;
-        LOG_IF_ERROR();
-        ERROR_LEAVE();
-    }
-
-    backupList = VecCtor(sizeof(*backupList), tableSize);
-    if (!backupList)
-    {
-        err = ERROR_NO_MEMORY;
-        LOG_IF_ERROR();
-        ERROR_LEAVE();
-    }
-
-    ScratchBufClean();
-
-    for (size_t i = 0; i < tableSize; i++)
-    {
-        size_t slen = 0;
-        if (fread(&slen, sizeof(slen), 1, backupFile) != 0)
-        {
-            err = ERROR_BAD_FILE;
-            LOG_IF_ERROR();
-            ERROR_LEAVE();
-        }
-
-        time_t updateDate = 0;
-        if (fread(&updateDate, sizeof(updateDate), 1, backupFile) != 0)
-        {
-            err = ERROR_BAD_FILE;
-            LOG_IF_ERROR();
-            ERROR_LEAVE();
-        }
-
-        if (fread(ScratchGetStr(), 1, slen, backupFile) != 0)
-        {
-            err = ERROR_BAD_FILE;
-            LOG_IF_ERROR();
-            ERROR_LEAVE();
-        }
-
-        FileEntry entry = { strdup(ScratchGetStr()), updateDate };
-        VecAdd(backupList, entry);
-    }
-
-    return (ResultFileList) { err, backupList };
 
 ERROR_CASE
-    safeclose(backupFile);
-    FileListDtor(backupList);
-    return (ResultFileList) { err, {} };
+    VecDtor(filesToSaveList);
+    return err;
 }
 
-static void writeBackupTable(const char backupTablePath[static 1], FileList backupTable)
-{
-    ERROR_CHECKING();
-
-    assert(backupTablePath);
-    assert(backupTable);
-
-    FILE* backupTableFile = NULL;
-
-    backupTableFile = fopen(backupTablePath, "wb");
-
-    if (!backupTableFile)
-    {
-        err = ERROR_BAD_FILE;
-        LOG_IF_ERROR();
-        ERROR_LEAVE();
-    }
-
-    size_t size = VecSize(backupTable);
-
-    fwrite(&size, sizeof(size), 1, backupTableFile);
-
-    for (size_t i = 0; i < size; i++)
-    {
-        struct LenTime
-        {
-            size_t len;
-            time_t time;
-        };
-
-        struct LenTime lt = { strlen(backupTable[i].path), backupTable[i].updateDate };
-
-        fwrite(&lt, sizeof(lt), 1, backupTableFile);
-        fwrite(backupTable[i].path, 1, lt.len, backupTableFile);
-    }
-
-ERROR_CASE
-    safeclose(backupTableFile);
-}
-
-void safeclose(FILE* file)
+[[maybe_unused]] void safeclose(FILE file[static 1])
 {
     if (file)
         fclose(file);
 }
 
-static void copyAndZip(const char dest[static 1], const char src[static 1])
+static void copyAndZip(const char src[static 1])
 {
     ERROR_CHECKING();
 
-    assert(dest);
     assert(src);
+
+    {
+        struct stat archstat = {};
+        if (stat(ScratchGetStr(), &archstat) == 0)
+        {
+            struct stat filestat = {};
+            stat(src, &filestat);
+            if (archstat.st_mtim.tv_sec == filestat.st_mtim.tv_sec)
+                return;
+        }
+    }
 
     pid_t copypid = fork();
 
     if (copypid == 0)
     {
+        pid_t touchpid = fork();
+        if (touchpid == 0)
+        {
+            const char* args[] = { "touch", src, NULL };
+            execvp("touch", (char**)args);
+        }
+        else if (touchpid == LINUX_ERROR)
+        {
+            err = ERROR_LINUX;
+            LOG_IF_ERROR();
+        }
         // child
-        const char* args[] = { "-czf", dest, src, NULL };
+        char* lastdirsep = strrchr(src, '/');
+        *lastdirsep = '\0';
+        const char* args[] = { "tar", "-czf", ScratchGetStr(), "-C", src, lastdirsep + 1, NULL };
         execvp("tar", (char**)args);
-
     }
     else if (copypid == LINUX_ERROR)
     {

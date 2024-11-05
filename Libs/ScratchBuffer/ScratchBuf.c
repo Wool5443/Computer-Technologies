@@ -69,7 +69,7 @@ ErrorCode ScratchAppendChar(char c)
     }
 
     scratchBuf.data[scratchBuf.size++] = c;
-    scratchBuf.data[scratchBuf.size++] = '\0';
+    scratchBuf.data[scratchBuf.size] = '\0';
 
     return err;
 }
@@ -93,7 +93,7 @@ ErrorCode ScratchAppendSlice(StringSlice slice)
     memcpy(scratchBuf.data + scratchBuf.size, slice.data, slice.size);
     scratchBuf.size += slice.size;
 
-    scratchBuf.data[scratchBuf.size++] = '\0';
+    scratchBuf.data[scratchBuf.size] = '\0';
 
     return err;
 }

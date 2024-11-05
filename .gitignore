@@ -1,5 +1,6 @@
 .cache
 build
+*.tar.gz
 a
 b
 c
