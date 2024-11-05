@@ -44,8 +44,8 @@ void ScratchBufDtor()
 
 void ScratchBufClean()
 {
+    memset(scratchBuf.data, 0, scratchBuf.size);
     scratchBuf.size = 0;
-    scratchBuf.data[0] = '\0';
 }
 
 size_t ScratchGetSize()
