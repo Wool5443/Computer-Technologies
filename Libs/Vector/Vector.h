@@ -28,9 +28,9 @@ typedef struct
 INLINE MAYBE_UNUSED void* VecCtor(size_t elemSize, size_t capacity)
 {
     ERROR_CHECKING();
-
     assert(elemSize);
-    assert(capacity);
+
+    capacity = capacity ? capacity : DEFAULT_CAPACITY;
 
     VHeader_* header = calloc(capacity * elemSize + sizeof(VHeader_), 1);
     if (!header)
@@ -69,6 +69,7 @@ INLINE MAYBE_UNUSED void* VecRealloc(void* vec, size_t elemSize)
         return vec;
 
     size_t newCap = header->capacity * 3 / 2;
+    LOG("newCap = %zu\n", newCap);
 
     void* newVec = VecCtor(elemSize, newCap);
     if (!newVec) return vec;
