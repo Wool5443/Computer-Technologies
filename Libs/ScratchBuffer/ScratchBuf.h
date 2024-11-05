@@ -9,7 +9,6 @@ void                    ScratchBufDtor();
 void                    ScratchBufClean();
 
 size_t                  ScratchGetSize();
-ErrorCode               ScratchSetSize(size_t size);
 char*                   ScratchGetStr();
 
 ErrorCode               ScratchAppendChar(char c);

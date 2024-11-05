@@ -53,14 +53,6 @@ size_t ScratchGetSize()
     return scratchBuf.size;
 }
 
-ErrorCode ScratchSetSize(size_t size)
-{
-    if (size > scratchBuf.capacity) return ERROR_INDEX_OUT_OF_BOUNDS;
-    scratchBuf.size = size;
-    scratchBuf.data[size] = '\0';
-    return EVERYTHING_FINE;
-}
-
 char* ScratchGetStr()
 {
     return scratchBuf.data;
