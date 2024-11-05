@@ -70,13 +70,14 @@ ErrorCode ScratchAppendChar(char c)
 {
     ERROR_CHECKING();
 
-    if (scratchBuf.size == scratchBuf.capacity)
+    if (scratchBuf.size + 1 >= scratchBuf.capacity)
     {
         err = ERROR_INDEX_OUT_OF_BOUNDS;
         RETURN(err);
     }
 
     scratchBuf.data[scratchBuf.size++] = c;
+    scratchBuf.data[scratchBuf.size++] = '\0';
 
     return err;
 }
@@ -91,7 +92,7 @@ ErrorCode ScratchAppendSlice(StringSlice slice)
         RETURN(err);
     }
 
-    if (scratchBuf.size + slice.size > scratchBuf.capacity)
+    if (scratchBuf.size + slice.size + 1 > scratchBuf.capacity)
     {
         err = ERROR_INDEX_OUT_OF_BOUNDS;
         RETURN(err);
@@ -99,6 +100,8 @@ ErrorCode ScratchAppendSlice(StringSlice slice)
 
     memcpy(scratchBuf.data + scratchBuf.size, slice.data, slice.size);
     scratchBuf.size += slice.size;
+
+    scratchBuf.data[scratchBuf.size++] = '\0';
 
     return err;
 }
