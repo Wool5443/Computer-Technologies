@@ -1,6 +1,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <math.h>
 #include <stdio.h> // IWYU pragma: keep
 #include <stddef.h>
 
@@ -34,16 +35,32 @@ typedef struct                                      \
 
 #define LOG(...) fprintf(stderr, __VA_ARGS__)
 
+#define LOG_ERROR()                                 \
+do                                                  \
+{                                                   \
+    fprintf(stderr, "%s in %s:%zu in %s\n",         \
+            GetErrorName(err),                      \
+            __FILE__,                               \
+            (size_t)__LINE__,                       \
+            __PRETTY_FUNCTION__                     \
+           );                                       \
+} while (0)
+
 #define LOG_IF_ERROR()                              \
 do                                                  \
 {                                                   \
     if (err)                                        \
-        fprintf(stderr, "%s in %s:%zu in %s\n",     \
-                GetErrorName(err),                  \
-                __FILE__,                           \
-                (size_t)__LINE__,                   \
-                __PRETTY_FUNCTION__                 \
-               );                                   \
+        LOG_ERROR()                                 \
+} while (0)
+
+#define CHECK_ERROR(expr)                           \
+do                                                  \
+{                                                   \
+    if ((err = (expr)))                             \
+    {                                               \
+        LOG_ERROR();                                \
+        ERROR_LEAVE();                              \
+    }                                               \
 } while (0)
 
 #define RETURN(retval)                              \
