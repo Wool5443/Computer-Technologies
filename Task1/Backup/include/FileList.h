@@ -8,7 +8,7 @@
 
 typedef struct
 {
-    char* path;
+    char*  path;
     time_t updateDate;
 } FileEntry;
 

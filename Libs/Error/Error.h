@@ -50,7 +50,7 @@ do                                                  \
 do                                                  \
 {                                                   \
     if (err)                                        \
-        LOG_ERROR()                                 \
+        LOG_ERROR();                                \
 } while (0)
 
 #define CHECK_ERROR(expr)                           \

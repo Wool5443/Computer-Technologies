@@ -1,39 +1,90 @@
+#include "Error.h"
 #include "Vector.h"
 #include "Backup.h"
 #include "ScratchBuf.h"
+
+ErrorCode RunBackup(const char* argv[]);
+ErrorCode RunRestore(const char* argv[]);
 
 int main(int argc, const char* argv[])
 {
     ERROR_CHECKING();
 
-    if (argc != 3)
+    CHECK_ERROR(ScratchBufInit(MAX_PATH_SIZE));
+
+    switch (argc)
     {
-        LOG("BAD ARGS!\nInput backup and storage folder!\n");
-        return ERROR_BAD_ARGS;
+    case 3:
+        err = RunBackup(argv);
+        break;
+    case 2:
+        err = RunRestore(argv);
+        break;
+    default:
+        err = ERROR_BAD_ARGS;
+        LOG_ERROR();
+        break;
     }
 
-    Backupper backupper = {};
-    if ((err = ScratchBufInit(MAX_PATH_SIZE)))
+ERROR_CASE
+    ScratchBufDtor();
+
+    return err;
+}
+
+ErrorCode RunBackup(const char* argv[])
+{
+    ERROR_CHECKING();
+
+    assert(argv);
+
+    char* backupPath  = NULL;
+    char* storagePath = NULL;
+
+    backupPath = SanitizePath(argv[1]);
+    if (!backupPath)
     {
-        goto cleanup;
+        err = ERROR_NO_MEMORY;
+        LOG_ERROR();
+        ERROR_LEAVE();
     }
 
-    ResultBackupper backupperRes = BackupperCtor(argv[1], argv[2]);
-    if ((err = backupperRes.error))
+    storagePath = SanitizePath(argv[2]);
+    if (!storagePath)
     {
-        LOG_IF_ERROR();
-        goto cleanup;
+        err = ERROR_NO_MEMORY;
+        LOG_ERROR();
+        ERROR_LEAVE();
     }
 
-    backupper = backupperRes.value;
+    CHECK_ERROR(Backup(backupPath, storagePath));
 
-    if ((err = Backup(&backupper)))
+ERROR_CASE
+    free(backupPath);
+    free(storagePath);
+
+    return err;
+}
+
+ErrorCode RunRestore(const char* argv[])
+{
+    ERROR_CHECKING();
+
+    assert(argv);
+
+    char* storagePath = NULL;
+
+    storagePath = SanitizePath(argv[1]);
+    if (!storagePath)
     {
-        LOG_IF_ERROR();
-        goto cleanup;
+        err = ERROR_NO_MEMORY;
+        LOG_ERROR();
+        ERROR_LEAVE();
     }
-cleanup:
-    BackupperDtor(&backupper);
 
+    Restore(storagePath);
+
+ERROR_CASE
+    free(storagePath);
     return err;
 }

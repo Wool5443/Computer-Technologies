@@ -16,7 +16,7 @@ ErrorCode               ScratchAppendSlice(StringSlice slice);
 static inline ErrorCode ScratchAppendStr(const char* str)
 {
     if (!str) return EVERYTHING_FINE;
-    return ScratchAppendSlice((StringSlice){ strlen(str), str });
+    return ScratchAppendSlice(StringSliceCtor(str));
 }
 
 void ScratchBufPop();
