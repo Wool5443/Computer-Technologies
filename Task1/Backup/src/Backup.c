@@ -11,7 +11,8 @@
 
 #define LINUX_ERROR -1
 #define BAD_COUNT (size_t)-1
-#define BACKUP_TABLE_NAME ".backTable"
+
+static const size_t SUFFIX_LENGTH = strlen(".tar.gz");
 
 static const char SLASH_REPLACE_SYMBOL = '*';
 
@@ -31,14 +32,6 @@ ErrorCode Backup(StringSlice backupPath, StringSlice storagePath)
     CHECK_ERROR(filesToSaveListRes.error);
 
     filesToSaveList = filesToSaveListRes.value;
-
-    printf("Backing up these files:\n");
-    for (size_t i = 0, sz = VecSize(filesToSaveList); i < sz; i++)
-    {
-        FileEntry ent = filesToSaveList[i];
-        printf("%s\n", ent.path);
-    }
-    printf("\n");
 
     for (size_t i = 0, end = VecSize(filesToSaveList); i < end; i++)
     {
@@ -132,30 +125,19 @@ static void copyAndZip(FileEntry saveFile, StringSlice storagePath)
         }
     }
 
-    char* lastdirsep = strrchr(saveFileSlice.data, '/');
+    char* lastdirsep = strrchr(saveFileSlice.data, '/'); // TODO we know length
     *lastdirsep = '\0';
 
     pid_t copypid = fork();
 
     if (copypid == 0)
     {
+        printf("%s was backed up!\n", saveFileSlice.data);
+        fflush(stdout);
         const char* args[] = { "tar", "-czf", ScratchGetStr(), "-C", saveFileSlice.data, lastdirsep + 1, NULL };
         execvp("tar", (char**)args);
     }
     else if (copypid == LINUX_ERROR)
-    {
-        err = ERROR_LINUX;
-        LOG_ERROR();
-        return;
-    }
-
-    pid_t touchpid = fork();
-    if (touchpid == 0)
-    {
-        const char* args[] = { "touch", saveFileSlice.data, NULL };
-        execvp("touch", (char**)args);
-    }
-    else if (touchpid == LINUX_ERROR)
     {
         err = ERROR_LINUX;
         LOG_ERROR();
@@ -167,11 +149,14 @@ static void unzip(FileEntry archive)
 {
     ERROR_CHECKING();
 
-    char destinationFolder[MAX_PATH_SIZE] = "";
-    strncpy(destinationFolder, strchr(archive.path, SLASH_REPLACE_SYMBOL), MAX_PATH_SIZE);
+    ScratchBufClean();
+    ScratchAppendStr(strchr(archive.path, SLASH_REPLACE_SYMBOL));
+
+    // delete .tar.gz at the end
+    ScratchGetStr()[ScratchGetSize() - SUFFIX_LENGTH] = '\0';
 
     char* lastSlash = NULL;
-    char* slash = strchr(destinationFolder, SLASH_REPLACE_SYMBOL);
+    char* slash = strchr(ScratchGetStr(), SLASH_REPLACE_SYMBOL);
 
     while (slash)
     {
@@ -180,13 +165,23 @@ static void unzip(FileEntry archive)
         slash = strchr(slash + 1, SLASH_REPLACE_SYMBOL);
     }
 
-    *(lastSlash + 1) = '\0';
+    {
+        struct stat filestat = {};
+        if (stat(ScratchGetStr(), &filestat) == 0)
+        {
+            struct stat archstat = {};
+            stat(archive.path, &archstat);
+            if (archstat.st_mtim.tv_sec >= filestat.st_mtim.tv_sec)
+                return;
+        }
+    }
 
     pid_t mkdirpid = fork();
 
     if (mkdirpid == 0)
     {
-        const char* args[] = { "mkdir", "-p", destinationFolder, NULL };
+        *lastSlash = '\0';
+        const char* args[] = { "mkdir", "-p", ScratchGetStr(), NULL };
         execvp("mkdir", (char**)args);
     }
     else if (mkdirpid == LINUX_ERROR)
@@ -200,7 +195,11 @@ static void unzip(FileEntry archive)
 
     if (unzipid == 0)
     {
-        const char* args[] = { "tar" , "-xzf", archive.path, "-C", destinationFolder, NULL };
+        *lastSlash = '/';
+        printf("%s was restored!\n", ScratchGetStr());
+        fflush(stdout);
+        *lastSlash = '\0';
+        const char* args[] = { "tar" , "-xzf", archive.path, "-C", ScratchGetStr(), NULL };
         execvp("tar", (char**)args);
     }
     else if (unzipid == LINUX_ERROR)
