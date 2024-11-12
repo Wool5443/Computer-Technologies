@@ -11,7 +11,7 @@ typedef struct
 
 static ScratchBuf scratchBuf = {};
 
-ErrorCode ScratchBufInit(size_t capacity)
+ErrorCode ScratchInit(size_t capacity)
 {
     ERROR_CHECKING();
 
@@ -37,12 +37,12 @@ ErrorCode ScratchBufInit(size_t capacity)
     return err;
 }
 
-void ScratchBufDtor()
+void ScratchDtor()
 {
     free(scratchBuf.data);
 }
 
-void ScratchBufClean()
+void ScratchClean()
 {
     memset(scratchBuf.data, 0, scratchBuf.size);
     scratchBuf.size = 0;
@@ -98,7 +98,7 @@ ErrorCode ScratchAppendSlice(StringSlice slice)
     return err;
 }
 
-void ScratchBufPop()
+void ScratchPop()
 {
     if (scratchBuf.size == 0) return;
 

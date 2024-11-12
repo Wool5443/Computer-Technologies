@@ -18,7 +18,7 @@ ResultFileList FileListCtor(const char dir[static 1])
     if (nftw(dir, fileListFn, MAX_FD, 0) != 0)
     {
         err = ERROR_BAD_FOLDER;
-        LOG_IF_ERROR();
+        LOG_ERROR();
         ERROR_LEAVE();
     }
 

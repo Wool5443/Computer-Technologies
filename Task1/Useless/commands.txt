@@ -1,6 +1,4 @@
-1 touch a
-4 touch b
-3 touch c
-2 touch d
+1 pwd
+2 ls
 8 date
 4 ls

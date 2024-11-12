@@ -10,7 +10,7 @@ int main(int argc, const char* argv[])
 {
     ERROR_CHECKING();
 
-    CHECK_ERROR(ScratchBufInit(MAX_PATH_SIZE));
+    CHECK_ERROR(ScratchInit(MAX_PATH_SIZE));
 
     switch (argc)
     {
@@ -27,7 +27,7 @@ int main(int argc, const char* argv[])
     }
 
 ERROR_CASE
-    ScratchBufDtor();
+    ScratchDtor();
 
     return err;
 }

@@ -4,21 +4,29 @@
 #include "StringSlice.h"
 #include "Error.h"
 
-ErrorCode               ScratchBufInit(size_t capacity);
-void                    ScratchBufDtor();
-void                    ScratchBufClean();
+#define INLINE static inline
+#if defined(__GNUC__) || defined(__clang__)
+    #define MAYBE_UNUSED __attribute__((unused))
+#else
+    #define UNUSED
+#endif
 
-size_t                  ScratchGetSize();
-char*                   ScratchGetStr();
+ErrorCode ScratchInit(size_t capacity);
+void      ScratchDtor();
+void      ScratchClean();
 
-ErrorCode               ScratchAppendChar(char c);
-ErrorCode               ScratchAppendSlice(StringSlice slice);
-static inline ErrorCode ScratchAppendStr(const char* str)
+size_t    ScratchGetSize();
+char*     ScratchGetStr();
+
+ErrorCode ScratchAppendChar(char c);
+ErrorCode ScratchAppendSlice(StringSlice slice);
+
+INLINE MAYBE_UNUSED ErrorCode ScratchAppendStr(const char* str)
 {
     if (!str) return EVERYTHING_FINE;
     return ScratchAppendSlice(StringSliceCtor(str));
 }
 
-void ScratchBufPop();
+void ScratchPop();
 
 #endif
