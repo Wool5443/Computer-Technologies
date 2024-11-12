@@ -2,3 +2,5 @@
 4 touch b
 3 touch c
 2 touch d
+8 date
+4 ls

@@ -15,21 +15,19 @@
 
 static const char SLASH_REPLACE_SYMBOL = '*';
 
-static void safeclose(FILE file[static 1]);
-
-static void copyAndZip(const char src[static 1]);
+static void copyAndZip(FileEntry saveFile, StringSlice storagePath);
 static void unzip(FileEntry archive);
 
-ErrorCode Backup(const char backupPath[static 1], const char storagePath[static 1])
+ErrorCode Backup(StringSlice backupPath, StringSlice storagePath)
 {
     ERROR_CHECKING();
 
-    assert(backupPath);
-    assert(storagePath);
+    assert(backupPath.data);
+    assert(storagePath.data);
 
     FileList filesToSaveList = NULL;
 
-    ResultFileList filesToSaveListRes = FileListCtor(backupPath);
+    ResultFileList filesToSaveListRes = FileListCtor(backupPath.data);
     CHECK_ERROR(filesToSaveListRes.error);
 
     filesToSaveList = filesToSaveListRes.value;
@@ -37,33 +35,14 @@ ErrorCode Backup(const char backupPath[static 1], const char storagePath[static 
     printf("Backing up these files:\n");
     for (size_t i = 0, sz = VecSize(filesToSaveList); i < sz; i++)
     {
-        FileEntry ent = filesToSaveList [i];
-        printf("%s: time = %ld\n", ent.path, ent.updateDate);
+        FileEntry ent = filesToSaveList[i];
+        printf("%s\n", ent.path);
     }
+    printf("\n");
 
     for (size_t i = 0, end = VecSize(filesToSaveList); i < end; i++)
     {
-        FileEntry  saveEntry    = filesToSaveList[i];
-
-        ScratchBufClean();
-        ScratchAppendStr(storagePath);
-
-        char* filename = ScratchGetStr() + ScratchGetSize();
-
-        ScratchAppendStr(saveEntry.path);
-
-        char* dirchar = strchr(filename, '/');
-
-        while (dirchar)
-        {
-            *dirchar = SLASH_REPLACE_SYMBOL;
-            dirchar = strchr(dirchar + 1, '/');
-        }
-
-        ScratchAppendStr(".tar.gz");
-        printf("%s backed up in %s\n", saveEntry.path, ScratchGetStr());
-
-        copyAndZip(saveEntry.path);
+        copyAndZip(filesToSaveList[i], storagePath);
     }
 
     return EVERYTHING_FINE;
@@ -73,15 +52,15 @@ ERROR_CASE
     return err;
 }
 
-ErrorCode Restore(const char storagePath[static 1])
+ErrorCode Restore(StringSlice storagePath)
 {
     ERROR_CHECKING();
 
-    assert(storagePath);
+    assert(storagePath.data);
 
     FileList fileList = NULL;
 
-    ResultFileList fileListRes = FileListCtor(storagePath);
+    ResultFileList fileListRes = FileListCtor(storagePath.data);
     CHECK_ERROR(fileListRes.error);
 
     fileList = fileListRes.value;
@@ -99,48 +78,68 @@ ERROR_CASE
     return err;
 }
 
-char* SanitizePath(const char path[static 1])
+String SanitizeDirectoryPath(const char path[static 1])
 {
     assert(path);
 
     size_t len = strlen(path);
 
     char* newPath = calloc(len + 2, 1);
-    if (!newPath) return NULL;
+    if (!newPath) return (String){};
 
     memcpy(newPath, path, len);
 
     if (newPath[len - 1] != '/')
+    {
         newPath[len] = '/';
+        len++;
+    }
 
-    return newPath;
+    return (String){ newPath, len };
 }
 
-static void copyAndZip(const char src[static 1])
+static void copyAndZip(FileEntry saveFile, StringSlice storagePath)
 {
     ERROR_CHECKING();
 
-    assert(src);
+    assert(storagePath.data);
+
+    StringSlice saveFileSlice = StringSliceCtor(saveFile.path);
+
+    ScratchBufClean();
+
+    ScratchAppendSlice(storagePath);
+    size_t fileNameIndex = ScratchGetSize();
+    ScratchAppendSlice(saveFileSlice);
+    ScratchAppendStr(".tar.gz");
+
+    char* slash = strchr(&ScratchGetStr()[fileNameIndex], '/');
+
+    while (slash)
+    {
+        *slash = SLASH_REPLACE_SYMBOL;
+        slash = strchr(slash + 1, '/');
+    }
 
     {
         struct stat archstat = {};
         if (stat(ScratchGetStr(), &archstat) == 0)
         {
             struct stat filestat = {};
-            stat(src, &filestat);
-            if (archstat.st_mtim.tv_sec == filestat.st_mtim.tv_sec)
+            stat(saveFileSlice.data, &filestat);
+            if (archstat.st_mtim.tv_sec >= filestat.st_mtim.tv_sec)
                 return;
         }
     }
 
-    char* lastdirsep = strrchr(src, '/');
+    char* lastdirsep = strrchr(saveFileSlice.data, '/');
     *lastdirsep = '\0';
 
     pid_t copypid = fork();
 
     if (copypid == 0)
     {
-        const char* args[] = { "tar", "-czf", ScratchGetStr(), "-C", src, lastdirsep + 1, NULL };
+        const char* args[] = { "tar", "-czf", ScratchGetStr(), "-C", saveFileSlice.data, lastdirsep + 1, NULL };
         execvp("tar", (char**)args);
     }
     else if (copypid == LINUX_ERROR)
@@ -153,7 +152,7 @@ static void copyAndZip(const char src[static 1])
     pid_t touchpid = fork();
     if (touchpid == 0)
     {
-        const char* args[] = { "touch", src, NULL };
+        const char* args[] = { "touch", saveFileSlice.data, NULL };
         execvp("touch", (char**)args);
     }
     else if (touchpid == LINUX_ERROR)

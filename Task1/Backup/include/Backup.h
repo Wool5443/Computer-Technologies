@@ -2,12 +2,19 @@
 #define BACKUP_H
 
 #include "Error.h"
+#include "StringSlice.h"
 
 #define MAX_PATH_SIZE 4096
 
-char*     SanitizePath(const char path[static 1]);
+typedef struct
+{
+    char*  data;
+    size_t size;
+} String;
 
-ErrorCode Backup(const char backupPath[static 1], const char storagePath[static 1]);
-ErrorCode Restore(const char storagePath[static 1]);
+String    SanitizeDirectoryPath(const char path[static 1]);
+
+ErrorCode Backup(StringSlice backupPath, StringSlice storagePath);
+ErrorCode Restore(StringSlice storagePath);
 
 #endif
