@@ -31,12 +31,9 @@ typedef struct
 DECLARE_RESULT(String);
 DECLARE_RESULT(Str);
 
-INLINE MAYBE_UNUSED Str StrCtor(const char* string)
+INLINE MAYBE_UNUSED Str StrCtorSize(const char* string, size_t size)
 {
     if (!string) return (Str){};
-
-    size_t size = strlen(string);
-
     if (size == 0) return (Str){};
 
     return (Str)
@@ -44,6 +41,11 @@ INLINE MAYBE_UNUSED Str StrCtor(const char* string)
         .data = string,
         .size = size,
     };
+}
+
+INLINE MAYBE_UNUSED Str StrCtor(const char* string)
+{
+    return StrCtorSize(string, strlen(string));
 }
 
 INLINE MAYBE_UNUSED Str StrCtorFromString(const String string)
@@ -90,7 +92,8 @@ INLINE MAYBE_UNUSED ResultString StringCtorFromStr(Str string)
 
     ResultString stringRes = StringCtorCapacity(string.size);
 
-    if (stringRes.error) return stringRes;
+    if ((err = stringRes.error))
+        RETURN(stringRes);
 
     memcpy(stringRes.value.data, string.data, string.size);
 
@@ -109,6 +112,18 @@ INLINE MAYBE_UNUSED void StringDtor(String* string)
     if (!string) return;
 
     free(string->data);
+}
+
+INLINE MAYBE_UNUSED ResultString StringCopy(const String string)
+{
+    ERROR_CHECKING();
+
+    ResultString stringRes = StringCtorFromStr(StrCtorFromString(string));
+
+    if ((err = stringRes.error))
+        RETURN(stringRes);
+
+    return stringRes;
 }
 
 INLINE MAYBE_UNUSED ErrorCode StringRealloc(String this[static 1], size_t newCapacity)
@@ -140,7 +155,7 @@ INLINE MAYBE_UNUSED ErrorCode StringRealloc(String this[static 1], size_t newCap
     return err;
 }
 
-INLINE MAYBE_UNUSED ErrorCode StringAppendStr(String this[static 1], const Str string)
+INLINE MAYBE_UNUSED ErrorCode StringAppendStr(String this[static 1], Str string)
 {
     ERROR_CHECKING();
 
@@ -158,6 +173,8 @@ INLINE MAYBE_UNUSED ErrorCode StringAppendStr(String this[static 1], const Str s
     }
 
     memcpy(this->data + this->size, string.data, string.size);
+
+    this->size = newSize;
 
     return err;
 }

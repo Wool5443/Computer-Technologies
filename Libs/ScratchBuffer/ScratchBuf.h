@@ -14,10 +14,12 @@ ErrorCode ScratchInit(size_t capacity);
 void      ScratchDtor();
 void      ScratchClean();
 
-size_t    ScratchGetSize();
-char*     ScratchGetStr();
+size_t       ScratchGetSize();
+char*        ScratchGet();
+Str          ScratchGetStr();
+ResultString ScratchGetString();
 
-ErrorCode ScratchAppendStr(const Str slice);
+ErrorCode ScratchAppendStr(Str slice);
 
 INLINE MAYBE_UNUSED ErrorCode ScratchAppendChar(char c)
 {
@@ -27,16 +29,16 @@ INLINE MAYBE_UNUSED ErrorCode ScratchAppendChar(char c)
     return ScratchAppendStr(chslice);
 }
 
-ErrorCode ScratchAppendString(const String string)
+INLINE MAYBE_UNUSED ErrorCode ScratchAppendString(const String string)
 {
     return ScratchAppendStr(StrCtorFromString(string));
 }
 
-ErrorCode ScratchAppend(const char* string)
+INLINE MAYBE_UNUSED ErrorCode ScratchAppend(const char* string)
 {
     return ScratchAppendStr(StrCtor(string));
 }
 
-void ScratchPop();
+void ScratchPop(size_t count);
 
 #endif

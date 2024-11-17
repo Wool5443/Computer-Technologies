@@ -41,28 +41,20 @@ ErrorCode RunBackup(const char* argv[])
     String backupPath  = {};
     String storagePath = {};
 
-    backupPath = SanitizeDirectoryPath(argv[1]);
-    if (!backupPath.data)
-    {
-        err = ERROR_NO_MEMORY;
-        LOG_ERROR();
-        ERROR_LEAVE();
-    }
+    ResultString backupPathRes = SanitizeDirectoryPath(argv[1]);
+    CHECK_ERROR(backupPathRes.error);
 
-    storagePath = SanitizeDirectoryPath(argv[2]);
-    if (!storagePath.data)
-    {
-        err = ERROR_NO_MEMORY;
-        LOG_ERROR();
-        ERROR_LEAVE();
-    }
+    backupPath = backupPathRes.value;
 
-    CHECK_ERROR(Backup((StringSlice){ backupPath.size, backupPath.data },
-                       (StringSlice){ storagePath.size, storagePath.data }));
+    ResultString storagePathRes = SanitizeDirectoryPath(argv[1]);
+    CHECK_ERROR(storagePathRes.error);
+    storagePath = storagePathRes.value;
+
+    CHECK_ERROR(Backup(StrCtorFromString(backupPath), StrCtorFromString(storagePath)));
 
 ERROR_CASE
-    free(backupPath.data);
-    free(storagePath.data);
+    StringDtor(&backupPath);
+    StringDtor(&storagePath);
 
     return err;
 }
@@ -75,15 +67,11 @@ ErrorCode RunRestore(const char* argv[])
 
     String storagePath = {};
 
-    storagePath = SanitizeDirectoryPath(argv[1]);
-    if (!storagePath.data)
-    {
-        err = ERROR_NO_MEMORY;
-        LOG_ERROR();
-        ERROR_LEAVE();
-    }
+    ResultString storagePathRes = SanitizeDirectoryPath(argv[1]);
+    CHECK_ERROR(storagePathRes.error);
+    storagePath = storagePathRes.value;
 
-    Restore((StringSlice){ storagePath.size, storagePath.data });
+    Restore(StrCtorFromString(storagePath));
 
 ERROR_CASE
     free(storagePath.data);

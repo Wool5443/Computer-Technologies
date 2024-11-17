@@ -34,6 +34,29 @@ void ScratchDtor()
     StringDtor(&scratchString);
 }
 
+size_t ScratchGetSize()
+{
+    CHECK_SCRATCH_STATE();
+    return scratchString.size;
+}
+
+char* ScratchGet()
+{
+    CHECK_SCRATCH_STATE();
+    return scratchString.data;
+}
+
+Str ScratchGetStr()
+{
+    CHECK_SCRATCH_STATE();
+    return StrCtorFromString(scratchString);
+}
+
+ResultString ScratchGetString()
+{
+    return StringCopy(scratchString);
+}
+
 void ScratchClean()
 {
     CHECK_SCRATCH_STATE();
@@ -43,7 +66,18 @@ void ScratchClean()
     scratchString.size = 0;
 }
 
-ErrorCode ScratchAppendStr(const Str string)
+void ScratchPop(size_t count)
+{
+    CHECK_SCRATCH_STATE();
+
+    if (count > scratchString.size) return;
+
+    scratchString.size -= count;
+
+    memset(scratchString.data + scratchString.size - 1, '\0', count);
+}
+
+ErrorCode ScratchAppendStr(Str string)
 {
     CHECK_SCRATCH_STATE();
 
