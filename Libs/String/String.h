@@ -26,26 +26,27 @@ typedef struct
 {
     const char* data;
     size_t size;
-} str;
+} Str;
 
 DECLARE_RESULT(String);
+DECLARE_RESULT(Str);
 
-INLINE MAYBE_UNUSED str StrCtor(const char* string)
+INLINE MAYBE_UNUSED Str StrCtor(const char* string)
 {
-    if (!string) return (str){};
+    if (!string) return (Str){};
 
     size_t size = strlen(string);
 
-    if (size == 0) return (str){};
+    if (size == 0) return (Str){};
 
-    return (str)
+    return (Str)
     {
         .data = string,
         .size = size,
     };
 }
 
-INLINE MAYBE_UNUSED ResultString StringCtorFromStr(str string)
+INLINE MAYBE_UNUSED ResultString StringCtorFromStr(Str string)
 {
     ERROR_CHECKING();
 
@@ -94,7 +95,7 @@ INLINE MAYBE_UNUSED void StringDtor(String* string)
     free(string->data);
 }
 
-INLINE MAYBE_UNUSED ErrorCode StringRealloc(String* this, size_t newCapacity)
+INLINE MAYBE_UNUSED ErrorCode StringRealloc(String this[static 1], size_t newCapacity)
 {
     ERROR_CHECKING();
 
@@ -103,11 +104,9 @@ INLINE MAYBE_UNUSED ErrorCode StringRealloc(String* this, size_t newCapacity)
 
     char* newData = NULL;
 
-    String string = *this;
+    if (this->capacity >= newCapacity) return EVERYTHING_FINE;
 
-    if (string.capacity >= newCapacity) return EVERYTHING_FINE;
-
-    newData = realloc(string.data, newCapacity);
+    newData = realloc(this->data, newCapacity);
 
     if (!newData)
     {
@@ -116,10 +115,12 @@ INLINE MAYBE_UNUSED ErrorCode StringRealloc(String* this, size_t newCapacity)
         ERROR_LEAVE();
     }
 
-    string.data = newData;
-    string.size = newCapacity;
-
-    *this = string;
+    *this = (String)
+    {
+        .data = newData,
+        .size = this->size,
+        .capacity = newCapacity
+    };
 
     return err;
 
@@ -129,7 +130,7 @@ ERROR_CASE
     return err;
 }
 
-INLINE MAYBE_UNUSED ErrorCode StringAppendStr(String* this, const str string)
+INLINE MAYBE_UNUSED ErrorCode StringAppendStr(String this[static 1], const Str string)
 {
     ERROR_CHECKING();
 
@@ -138,13 +139,11 @@ INLINE MAYBE_UNUSED ErrorCode StringAppendStr(String* this, const str string)
     if (!string.data) return EVERYTHING_FINE;
     if (string.size == 0) return EVERYTHING_FINE;
 
-    String newString = *this;
+    size_t newSize = this->size + string.size;
 
-    size_t newSize = newString.size + string.size;
-
-    if (newSize > newString.capacity)
+    if (newSize > this->capacity)
     {
-        err = StringRealloc(&newString, newString.capacity * 3 / 2);
+        err = StringRealloc(this, this->capacity * 3 / 2);
         if (err)
         {
             LOG_ERROR();
@@ -152,9 +151,7 @@ INLINE MAYBE_UNUSED ErrorCode StringAppendStr(String* this, const str string)
         }
     }
 
-    memcpy(newString.data + newString.size, string.data, string.size);
-
-    *this = newString;
+    memcpy(this->data + this->size, string.data, string.size);
 
     return err;
 
@@ -162,15 +159,40 @@ ERROR_CASE
     return err;
 }
 
-INLINE MAYBE_UNUSED ErrorCode StringAppendString(String* this, const String string)
+INLINE MAYBE_UNUSED ErrorCode StringAppendString(String this[static 1], const String string)
 {
-    return StringAppendStr(this, (str){ string.data, string.size });
+    return StringAppendStr(this, (Str){ string.data, string.size });
 }
 
-INLINE MAYBE_UNUSED ErrorCode StringAppendChar(String* this, char ch)
+INLINE MAYBE_UNUSED ErrorCode StringAppendChar(String this[static 1], char ch)
 {
     char chstr[2] = { ch, '\0'};
-    return StringAppendStr(this, (str){ chstr, 1 });
+    return StringAppendStr(this, (Str){ chstr, 1 });
+}
+
+INLINE MAYBE_UNUSED ResultStr StringSlice(const String this[static 1], size_t startIdx, size_t endIdx)
+{
+    ERROR_CHECKING();
+
+    assert(this);
+
+    if (startIdx >= this->size || endIdx >= this->size
+        || endIdx < startIdx)
+    {
+        err = ERROR_BAD_ARGS;
+        LOG_ERROR();
+        ERROR_LEAVE();
+    }
+
+    return (ResultStr)
+    {
+        err,
+        (Str){ .data = this->data + startIdx, .size = endIdx - startIdx },
+    };
+
+ERROR_CASE
+
+    return (ResultStr){ err, (Str){} };
 }
 
 #endif // STRING_H_
