@@ -1,7 +1,6 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include <math.h>
 #include <stdio.h> // IWYU pragma: keep
 #include <stddef.h>
 
@@ -65,7 +64,8 @@ do                                                  \
 
 #define RETURN(retval)                              \
 do                                                  \
-{   LOG_IF_ERROR();                                 \
+{                                                   \
+    LOG_IF_ERROR();                                 \
     return retval;                                  \
 } while (0)
 
@@ -74,16 +74,6 @@ do                                                  \
 {                                                   \
     if (err)                                        \
         RETURN(err);                                \
-} while (0)
-
-#define RETURN_RESULT_IF(resultType)                \
-do                                                  \
-{                                                   \
-    if (err)                                        \
-    {                                               \
-        resultType _res_ = { err, {} };             \
-        RETURN(_res_);                              \
-    }                                               \
 } while (0)
 
 #endif // UTILS_H

@@ -1,107 +1,57 @@
-#include <stdint.h>
-#include <stdlib.h>
 #include "ScratchBuf.h"
+#include <math.h>
 
-typedef struct
-{
-    size_t size;
-    size_t capacity;
-    char*  data;
-} ScratchBuf;
+#define CHECK_SCRATCH_STATE()                                       \
+do                                                                  \
+{                                                                   \
+    if (!scratchString.data)                                        \
+    {                                                               \
+        LOG("PLEASE, INITIALIZE SCRATCH BUFFER FIRST!!!!\n");       \
+        abort();                                                    \
+    }                                                               \
+} while (0)
 
-static ScratchBuf scratchBuf = {};
+static String scratchString;
 
 ErrorCode ScratchInit(size_t capacity)
 {
     ERROR_CHECKING();
 
-    if (capacity == 0 || capacity > UINT32_MAX)
-    {
-        err = ERROR_BAD_VALUE;
-        RETURN(err);
-    }
+    assert(capacity != 0 && "Capacity can't be zero!");
 
-    char* data = calloc(capacity, 1);
-    if (!data)
-    {
-        err = ERROR_NO_MEMORY;
-        RETURN(err);
-    }
+    ResultString strRes = StringCtorCapacity(capacity);
 
-    scratchBuf = (ScratchBuf) {
-        .size = 0,
-        .capacity = capacity,
-        .data = data,
-    };
+    err = strRes.error;
+    RETURN_ERROR_IF();
+
+    scratchString = strRes.value;
 
     return err;
 }
 
 void ScratchDtor()
 {
-    free(scratchBuf.data);
+    StringDtor(&scratchString);
 }
 
 void ScratchClean()
 {
-    memset(scratchBuf.data, 0, scratchBuf.size);
-    scratchBuf.size = 0;
+    CHECK_SCRATCH_STATE();
+
+    memset(scratchString.data, '\0', scratchString.capacity);
+
+    scratchString.size = 0;
 }
 
-size_t ScratchGetSize()
+ErrorCode ScratchAppendStr(const Str string)
 {
-    return scratchBuf.size;
-}
+    CHECK_SCRATCH_STATE();
 
-char* ScratchGetStr()
-{
-    return scratchBuf.data;
-}
-
-ErrorCode ScratchAppendChar(char c)
-{
     ERROR_CHECKING();
 
-    if (scratchBuf.size + 1 >= scratchBuf.capacity)
-    {
-        err = ERROR_INDEX_OUT_OF_BOUNDS;
-        RETURN(err);
-    }
+    if (!string.data) return err;
 
-    scratchBuf.data[scratchBuf.size++] = c;
-    scratchBuf.data[scratchBuf.size] = '\0';
+    err = StringAppendStr(&scratchString, string);
 
-    return err;
-}
-
-ErrorCode ScratchAppendSlice(StringSlice slice)
-{
-    ERROR_CHECKING();
-
-    if (!slice.data)
-    {
-        err = ERROR_NULLPTR;
-        RETURN(err);
-    }
-
-    if (scratchBuf.size + slice.size + 1 > scratchBuf.capacity)
-    {
-        err = ERROR_INDEX_OUT_OF_BOUNDS;
-        RETURN(err);
-    }
-
-    memcpy(scratchBuf.data + scratchBuf.size, slice.data, slice.size);
-    scratchBuf.size += slice.size;
-
-    scratchBuf.data[scratchBuf.size] = '\0';
-
-    return err;
-}
-
-void ScratchPop()
-{
-    if (scratchBuf.size == 0) return;
-
-    scratchBuf.size--;
-    scratchBuf.data[scratchBuf.size] = '\0';
+    RETURN(err);
 }

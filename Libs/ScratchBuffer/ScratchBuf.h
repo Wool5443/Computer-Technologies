@@ -1,8 +1,7 @@
 #ifndef SCRATCH_BUF_H
 #define SCRATCH_BUF_H
 
-#include "StringSlice.h"
-#include "Error.h"
+#include "String.h"
 
 #define INLINE static inline
 #if defined(__GNUC__) || defined(__clang__)
@@ -18,13 +17,24 @@ void      ScratchClean();
 size_t    ScratchGetSize();
 char*     ScratchGetStr();
 
-ErrorCode ScratchAppendChar(char c);
-ErrorCode ScratchAppendSlice(StringSlice slice);
+ErrorCode ScratchAppendStr(const Str slice);
 
-INLINE MAYBE_UNUSED ErrorCode ScratchAppendStr(const char* str)
+INLINE MAYBE_UNUSED ErrorCode ScratchAppendChar(char c)
 {
-    if (!str) return EVERYTHING_FINE;
-    return ScratchAppendSlice(StringSliceCtor(str));
+    char chstr[] = { c, '\0'};
+    Str chslice = StrCtor(chstr);
+
+    return ScratchAppendStr(chslice);
+}
+
+ErrorCode ScratchAppendString(const String string)
+{
+    return ScratchAppendStr(StrCtorFromString(string));
+}
+
+ErrorCode ScratchAppend(const char* string)
+{
+    return ScratchAppendStr(StrCtor(string));
 }
 
 void ScratchPop();
