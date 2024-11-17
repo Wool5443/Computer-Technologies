@@ -12,4 +12,4 @@ target_include_directories(${EXE}
     PRIVATE ${LIBS_ROOT}/Error
     PRIVATE ${LIBS_ROOT}/ScratchBuffer
     PRIVATE ${LIBS_ROOT}/Vector)
-target_link_libraries(${EXE} pthread m Error ScratchBuf)
+target_link_libraries(${EXE} pthread m Error ScratchBuf Vector)
