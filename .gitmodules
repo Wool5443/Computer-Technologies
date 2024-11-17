@@ -1,0 +1,3 @@
+[submodule "Libs/mlib"]
+	path = Libs/cmlib
+	url = https://github.com/Wool5443/cmlib
