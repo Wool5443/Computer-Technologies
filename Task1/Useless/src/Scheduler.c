@@ -4,7 +4,6 @@
 #include <assert.h>
 #include <sys/wait.h>
 #include "Scheduler.h"
-#include "Error.h"
 
 time_t StartTime = 0;
 
@@ -39,23 +38,23 @@ ResultScheduler SchedulerCtor(size_t size)
     if (!cmdThreads)
     {
         err = ERROR_NO_MEMORY;
-        goto cleanup;
+        ERROR_LEAVE();
     }
 
-    return (ResultScheduler) {
-        .error = EVERYTHING_FINE,
-        .value = {
+    return ResultSchedulerCtor(
+        (Scheduler)
+        {
             .size = size,
             .threads = cmdThreads,
             .currentThread = 0,
-        }
-    };
+        },
+        err
+    );
 
-cleanup:
+ERROR_CASE
     free(cmdThreads);
 
-    ResultScheduler res = { err, {} };
-    RETURN(res);
+    RETURN(ResultSchedulerCtor((Scheduler){}, err));
 }
 
 void SchedulerDtor(Scheduler scheduler[static 1])
@@ -105,7 +104,7 @@ ErrorCode SchedulerJoin(Scheduler scheduler[static 1])
         if (pthread_join(threads[i], NULL) != EVERYTHING_FINE)
         {
             err = ERROR_BAD_THREAD;
-            LOG_IF_ERROR();
+            LOG_ERROR_IF();
         }
     }
 

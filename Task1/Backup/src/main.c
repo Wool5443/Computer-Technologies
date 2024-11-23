@@ -1,5 +1,3 @@
-#include "Error.h"
-#include "Vector.h"
 #include "Backup.h"
 #include "ScratchBuf.h"
 
@@ -29,6 +27,8 @@ int main(int argc, const char* argv[])
 ERROR_CASE
     ScratchDtor();
 
+    LoggerFinish();
+
     return err;
 }
 
@@ -42,12 +42,12 @@ ErrorCode RunBackup(const char* argv[])
     String storagePath = {};
 
     ResultString backupPathRes = SanitizeDirectoryPath(argv[1]);
-    CHECK_ERROR(backupPathRes.error);
+    CHECK_ERROR(backupPathRes.errorCode);
 
     backupPath = backupPathRes.value;
 
     ResultString storagePathRes = SanitizeDirectoryPath(argv[1]);
-    CHECK_ERROR(storagePathRes.error);
+    CHECK_ERROR(storagePathRes.errorCode);
     storagePath = storagePathRes.value;
 
     CHECK_ERROR(Backup(StrCtorFromString(backupPath), StrCtorFromString(storagePath)));
@@ -68,7 +68,7 @@ ErrorCode RunRestore(const char* argv[])
     String storagePath = {};
 
     ResultString storagePathRes = SanitizeDirectoryPath(argv[1]);
-    CHECK_ERROR(storagePathRes.error);
+    CHECK_ERROR(storagePathRes.errorCode);
     storagePath = storagePathRes.value;
 
     Restore(StrCtorFromString(storagePath));

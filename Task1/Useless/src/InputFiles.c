@@ -3,19 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+
 #include "InputFiles.h"
-#include "Error.h"
 
 size_t countLines(const char text[static 1]);
 size_t fileSize(int fd);
-
-void CommandListDtor(CommandList list[static 1])
-{
-    assert(list);
-
-    free(list->commands);
-    free(list->m_buffer);
-}
 
 ResultCommandList CommandListCtor(const char filePath[static 1])
 {
@@ -31,7 +23,7 @@ ResultCommandList CommandListCtor(const char filePath[static 1])
     if (!file)
     {
         err = ERROR_BAD_FILE;
-        goto cleanup;
+        ERROR_LEAVE();
     }
 
     size_t size = fileSize(fileno(file));
@@ -40,7 +32,7 @@ ResultCommandList CommandListCtor(const char filePath[static 1])
     if (!buffer)
     {
         err = ERROR_NO_MEMORY;
-        goto cleanup;
+        ERROR_LEAVE();
     }
 
     fread(buffer, 1, size, file);
@@ -51,7 +43,7 @@ ResultCommandList CommandListCtor(const char filePath[static 1])
     if (!list)
     {
         err = ERROR_NO_MEMORY;
-        goto cleanup;
+        ERROR_LEAVE();
     }
 
     char* bufferPtr = strtok(buffer, "\n");
@@ -79,7 +71,7 @@ ResultCommandList CommandListCtor(const char filePath[static 1])
             if (argIndex == MAX_ARGS)
             {
                 err = ERROR_INDEX_OUT_OF_BOUNDS;
-                goto cleanup;
+                ERROR_LEAVE();
             }
 
             *(argPtr++) = '\0';
@@ -92,21 +84,29 @@ ResultCommandList CommandListCtor(const char filePath[static 1])
         bufferPtr = strtok(NULL, "\n");
     }
 
-    return (ResultCommandList) {
-        .error = EVERYTHING_FINE,
-        .value = (CommandList) {
+    return ResultCommandListCtor(
+        (CommandList)
+        {
             .size = lines,
             .commands = list,
             .m_buffer = buffer,
         },
-    };
+        err
+    );
 
-cleanup:
+ERROR_CASE
     fclose(file);
     free(buffer);
     free(list);
-    ResultCommandList res = { err, {} };
-    RETURN(res);
+    RETURN(ResultCommandListCtor((CommandList){}, err));
+}
+
+void CommandListDtor(CommandList list[static 1])
+{
+    assert(list);
+
+    free(list->commands);
+    free(list->m_buffer);
 }
 
 size_t countLines(const char text[static 1])

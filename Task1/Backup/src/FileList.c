@@ -22,11 +22,11 @@ ResultFileList FileListCtor(const char dir[static 1])
         ERROR_LEAVE();
     }
 
-    return (ResultFileList){ err, fileNames };
+    return ResultFileListCtor(fileNames, err);
 
 ERROR_CASE
     FileListDtor(fileNames);
-    return (ResultFileList){ err, {} };
+    return ResultFileListCtor((FileList){}, err);
 }
 
 void FileListDtor(FileList list)
@@ -38,7 +38,7 @@ void FileListDtor(FileList list)
     VecDtor(list);
 }
 
-int FileEntryCompare(const void* a, const void* b)
+time_t FileEntryCompare(const void* a, const void* b)
 {
     if (!a || !b)
         return -1;

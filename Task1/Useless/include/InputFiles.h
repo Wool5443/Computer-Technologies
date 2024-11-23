@@ -2,7 +2,7 @@
 #define INPUT_FILES_H
 
 #include "Commands.h"
-#include "Error.h"
+#include "Logger.h" // IWYU pragma: keep
 
 DECLARE_RESULT(CommandList);
 

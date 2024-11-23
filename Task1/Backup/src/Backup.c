@@ -3,7 +3,6 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#include "Error.h"
 #include "FileList.h"
 #include "ScratchBuf.h"
 #include "Vector.h"
@@ -29,14 +28,12 @@ ErrorCode Backup(Str backupPath, Str storagePath)
     FileList filesToSaveList = NULL;
 
     ResultFileList filesToSaveListRes = FileListCtor(backupPath.data);
-    CHECK_ERROR(filesToSaveListRes.error);
+    CHECK_ERROR(filesToSaveListRes.errorCode);
 
     filesToSaveList = filesToSaveListRes.value;
 
     for (size_t i = 0, end = VecSize(filesToSaveList); i < end; i++)
-    {
         copyAndZip(filesToSaveList[i], storagePath);
-    }
 
     return EVERYTHING_FINE;
 
@@ -54,7 +51,7 @@ ErrorCode Restore(Str storagePath)
     FileList fileList = NULL;
 
     ResultFileList fileListRes = FileListCtor(storagePath.data);
-    CHECK_ERROR(fileListRes.error);
+    CHECK_ERROR(fileListRes.errorCode);
 
     fileList = fileListRes.value;
 
@@ -81,7 +78,7 @@ ResultString SanitizeDirectoryPath(const char path[static 1])
 
     ResultString stringRes = StringCtorCapacity(size + 1);
 
-    if ((err = stringRes.error))
+    if ((err = stringRes.errorCode))
         RETURN(stringRes);
 
     String string = stringRes.value;

@@ -1,7 +1,6 @@
 #ifndef BACKUP_H
 #define BACKUP_H
 
-#include "Error.h"
 #include "String.h"
 
 #define MAX_PATH_SIZE 4096

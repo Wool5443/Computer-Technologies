@@ -3,7 +3,7 @@
 
 #include <pthread.h>
 #include "Commands.h"
-#include "Error.h"
+#include "Logger.h" // IWYU pragma: keep
 
 typedef struct
 {
