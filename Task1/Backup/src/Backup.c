@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <limits.h>
 #include <sys/stat.h>
 
 #include "FileList.h"
@@ -74,23 +75,21 @@ ResultString SanitizeDirectoryPath(const char path[static 1])
 
     assert(path);
 
-    size_t size = strlen(path);
+    char goodPath[PATH_MAX] = "";
 
-    ResultString stringRes = StringCtorCapacity(size + 1);
+    if (!realpath(path, goodPath))
+    {
+        err = ERROR_BAD_FOLDER;
+        LOG_ERROR();
+        return (ResultString){ {}, err };
+    }
 
-    if ((err = stringRes.errorCode))
-        RETURN(stringRes);
+    size_t size = strlen(goodPath);
 
-    String string = stringRes.value;
+    goodPath[size] = '/';
+    size++;
 
-    StringAppendStr(&string, StrCtorSize(path, size));
-
-    char* slashSymb = &string.data[string.size - 1];
-
-    if (slashSymb[0] != '/')
-        slashSymb[1] = '/';
-
-    return stringRes;
+    return StringCtorFromStr(StrCtorSize(goodPath, size));
 }
 
 static void copyAndZip(FileEntry saveFile, Str storagePath)

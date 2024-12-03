@@ -8,6 +8,8 @@ int main(int argc, const char* argv[])
 {
     ERROR_CHECKING();
 
+    LoggerInitConsole();
+
     CHECK_ERROR(ScratchInit(MAX_PATH_SIZE));
 
     switch (argc)
@@ -46,7 +48,7 @@ ErrorCode RunBackup(const char* argv[])
 
     backupPath = backupPathRes.value;
 
-    ResultString storagePathRes = SanitizeDirectoryPath(argv[1]);
+    ResultString storagePathRes = SanitizeDirectoryPath(argv[2]);
     CHECK_ERROR(storagePathRes.errorCode);
     storagePath = storagePathRes.value;
 
