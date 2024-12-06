@@ -80,7 +80,7 @@ ResultString SanitizeDirectoryPath(const char path[static 1])
     if (!realpath(path, goodPath))
     {
         err = ERROR_BAD_FOLDER;
-        LOG_ERROR();
+        LogError();
         return (ResultString){ {}, err };
     }
 
@@ -141,7 +141,7 @@ static void copyAndZip(FileEntry saveFile, Str storagePath)
     else if (copypid == LINUX_ERROR)
     {
         err = ERROR_LINUX;
-        LOG_ERROR();
+        LogError();
         return;
     }
 }
@@ -188,7 +188,7 @@ static void unzip(FileEntry archive)
     else if (mkdirpid == LINUX_ERROR)
     {
         err = LINUX_ERROR;
-        LOG_ERROR();
+        LogError();
         return;
     }
 
@@ -206,7 +206,7 @@ static void unzip(FileEntry archive)
     else if (unzipid == LINUX_ERROR)
     {
         err = LINUX_ERROR;
-        LOG_ERROR();
+        LogError();
         return;
     }
 
@@ -219,7 +219,7 @@ static void unzip(FileEntry archive)
     else if (touchpid == LINUX_ERROR)
     {
         err = ERROR_LINUX;
-        LOG_ERROR();
+        LogError();
         return;
     }
 }

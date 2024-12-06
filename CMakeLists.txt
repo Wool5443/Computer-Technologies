@@ -17,5 +17,6 @@ set(LIBS_ROOT ${PROJECT_ROOT}/Libs)
 
 add_subdirectory(Libs/cmlib)
 add_subdirectory(Task1)
+add_subdirectory(Task2)
 # add_subdirectory(Sem5)
 # add_subdirectory(Sem7)

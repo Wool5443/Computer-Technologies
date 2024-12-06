@@ -98,7 +98,11 @@ ERROR_CASE
     fclose(file);
     free(buffer);
     free(list);
-    RETURN(ResultCommandListCtor((CommandList){}, err));
+
+    if (err)
+        LogError();
+
+    return ResultCommandListCtor((CommandList){}, err);
 }
 
 void CommandListDtor(CommandList list[static 1])

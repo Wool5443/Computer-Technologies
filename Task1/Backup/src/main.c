@@ -22,7 +22,7 @@ int main(int argc, const char* argv[])
         break;
     default:
         err = ERROR_BAD_ARGS;
-        LOG_ERROR();
+        LogError();
         break;
     }
 
