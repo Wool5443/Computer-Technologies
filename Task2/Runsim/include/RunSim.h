@@ -1,7 +1,7 @@
 #ifndef RUNSIM_H
 #define RUNSIM_H
 
-#include "Logger.h" // IWYU pragma: keep
+#include "Logger.h"
 
 ErrorCode RunSim(size_t maxPrograms);
 

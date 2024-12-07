@@ -2,7 +2,6 @@ set(EXE runsim)
 
 set(SOURCES
     "src/main.c"
-    "src/ProgramList.c"
     "src/RunSim.c"
 )
 

@@ -1,30 +1,25 @@
+#include <stdio.h>
 #include <stdlib.h>
-#include <stdatomic.h>
 #include "RunSim.h"
-#include "Logger.h" // IWYU pragma: keep
 
-int main(int argc, const char* argv[])
+#define MAX_CMD_LEN 256
+
+int main(int argc, char* argv[])
 {
     ERROR_CHECKING();
 
-    // LoggerInit("log.txt");
-    LoggerInitConsole();
-
     if (argc != 2)
     {
-        err = ERROR_BAD_ARGS;
-        LogError("Give max number of processes in args!!!");
-        ERROR_LEAVE();
+        fprintf(stdout, "Usage: %s <max_running_programs>\n", argv[0]);
+        return ERROR_BAD_ARGS;
     }
 
-    size_t maxPrograms = atoi(argv[1]);
-
-    if ((err = RunSim(maxPrograms)))
+    int maxPrograms = atoi(argv[1]);
+    if (maxPrograms <= 0)
     {
-        ERROR_LEAVE();
+        fprintf(stdout, "Error: max_running_programs should be a positive integer\n");
+        return ERROR_BAD_ARGS;
     }
 
-ERROR_CASE
-    LoggerFinish();
-    return err;
+    return RunSim(maxPrograms);
 }
