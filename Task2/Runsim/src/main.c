@@ -8,18 +8,27 @@ int main(int argc, char* argv[])
 {
     ERROR_CHECKING();
 
+    LoggerInitConsole();
+
     if (argc != 2)
     {
         fprintf(stdout, "Usage: %s <max_running_programs>\n", argv[0]);
-        return ERROR_BAD_ARGS;
+        err = ERROR_BAD_ARGS;
+        ERROR_LEAVE();
     }
 
     int maxPrograms = atoi(argv[1]);
     if (maxPrograms <= 0)
     {
         fprintf(stdout, "Error: max_running_programs should be a positive integer\n");
-        return ERROR_BAD_ARGS;
+        err = ERROR_BAD_ARGS;
+        ERROR_LEAVE();
     }
 
-    return RunSim(maxPrograms);
+    err = RunSim(maxPrograms);
+
+ERROR_CASE
+    LoggerFinish();
+
+    return err;
 }

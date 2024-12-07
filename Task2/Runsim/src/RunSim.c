@@ -1,13 +1,13 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <errno.h>
+#include <stdatomic.h>
 
 #include "Vector.h"
 #include "RunSim.h"
 
 #define MAX_USER_INPUT 512
 
-static void sigchildHandler(int signum, siginfo_t* siginfo, void* unused);
 static const char** parseArgs(char string[static 1]);
 
 size_t running = 0;
@@ -15,21 +15,6 @@ size_t running = 0;
 ErrorCode RunSim(size_t maxPrograms)
 {
     ERROR_CHECKING();
-
-    const char** args = NULL;
-
-    struct sigaction sa = {};
-    sa.sa_flags = SA_SIGINFO | SA_RESTART;
-    sa.sa_sigaction = sigchildHandler;
-    sigemptyset(&sa.sa_mask);
-
-    if (sigaction(SIGCHLD, &sa, NULL) == -1)
-    {
-        int ern = errno;
-        err = ERROR_LINUX;
-        LogError("sigaction failed: %s", strerror(ern));
-        ERROR_LEAVE();
-    }
 
     char userInput[MAX_USER_INPUT + 1] = "";
     size_t running = 0;
@@ -48,7 +33,7 @@ ErrorCode RunSim(size_t maxPrograms)
             goto nextLoop;
         }
 
-        args = parseArgs(userInput);
+        const char** args = parseArgs(userInput);
 
         if (!args)
         {
@@ -61,6 +46,7 @@ ErrorCode RunSim(size_t maxPrograms)
             int ern = errno;
             err = ERROR_LINUX;
             LogError("fork error: %s", strerror(ern));
+            VecDtor(args);
             ERROR_LEAVE();
         }
         else if (pid == 0)
@@ -70,10 +56,13 @@ ErrorCode RunSim(size_t maxPrograms)
             int ern = errno;
             err = ERROR_LINUX;
             LogError("execvp error: %s", strerror(ern));
+            VecDtor(args);
             ERROR_LEAVE();
         }
 
+        LogInfo("before running: %zu", running);
         running++;
+        LogInfo("after running: %zu", running);
 
         VecDtor(args);
 
@@ -108,13 +97,7 @@ nextLoop:
     }
 
 ERROR_CASE
-    VecDtor(args);
     return err;
-}
-
-static void sigchildHandler(int signum, siginfo_t* siginfo, void* unused)
-{
-
 }
 
 static const char** parseArgs(char string[static 1])
