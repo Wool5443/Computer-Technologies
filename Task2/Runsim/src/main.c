@@ -8,7 +8,7 @@ int main(int argc, char* argv[])
 {
     ERROR_CHECKING();
 
-    LoggerInitConsole();
+    LoggerInit("log.txt");
 
     if (argc != 2)
     {

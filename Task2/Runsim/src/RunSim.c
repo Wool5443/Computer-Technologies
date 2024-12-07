@@ -1,7 +1,9 @@
+#include <errno.h>
+#include <pthread.h>
+#include <stdatomic.h>
+#include <stdbool.h>
 #include <string.h>
 #include <sys/wait.h>
-#include <errno.h>
-#include <stdatomic.h>
 
 #include "Vector.h"
 #include "RunSim.h"
@@ -10,14 +12,19 @@
 
 static const char** parseArgs(char string[static 1]);
 
-size_t running = 0;
+static void* poller(void* arg);
+
+atomic_size_t currentProgramsRunningAtomic = 0;
+atomic_bool running = true;
 
 ErrorCode RunSim(size_t maxPrograms)
 {
     ERROR_CHECKING();
 
     char userInput[MAX_USER_INPUT + 1] = "";
-    size_t running = 0;
+
+    pthread_t pollingThread = {};
+    pthread_create(&pollingThread, NULL, poller, NULL);
 
     while (fgets(userInput, MAX_USER_INPUT, stdin))
     {
@@ -27,17 +34,18 @@ ErrorCode RunSim(size_t maxPrograms)
             userInput[len - 1] = '\0';
         }
 
-        if (running >= maxPrograms)
+        size_t currentProgramsRunning = atomic_load_explicit(&currentProgramsRunningAtomic, memory_order_acquire);
+        if (currentProgramsRunning  >= maxPrograms)
         {
             fprintf(stdout, "Max running programs reached. Command \"%s\" ignored.\n", userInput);
-            goto nextLoop;
+            continue;
         }
 
         const char** args = parseArgs(userInput);
 
         if (!args)
         {
-            goto nextLoop;
+            continue;
         }
 
         pid_t pid = fork();
@@ -60,43 +68,20 @@ ErrorCode RunSim(size_t maxPrograms)
             ERROR_LEAVE();
         }
 
-        LogInfo("before running: %zu", running);
-        running++;
-        LogInfo("after running: %zu", running);
+        atomic_fetch_add_explicit(&currentProgramsRunningAtomic, 1, memory_order_release);
 
         VecDtor(args);
-
-nextLoop:
-        while (running > 0)
-        {
-            int status = 0;
-            pid_t finishedPid = waitpid(-1, &status, WNOHANG);
-
-            if (finishedPid == -1)
-            {
-                int ern = errno;
-                err = ERROR_LINUX;
-                LogError("waitpid error: %s", strerror(ern));
-                ERROR_LEAVE();
-            }
-            else if (finishedPid > 0)
-            {
-                running--;
-            }
-            else if (finishedPid == 0)
-            {
-                break;
-            }
-        }
-    }
-
-    while (running > 0)
-    {
-        wait(NULL);
-        running--;
     }
 
 ERROR_CASE
+    atomic_store_explicit(&running, false, memory_order_release);
+
+    while (atomic_load_explicit(&currentProgramsRunningAtomic, memory_order_acquire))
+    {
+        wait(NULL);
+        atomic_fetch_sub_explicit(&currentProgramsRunningAtomic, 1, memory_order_release);
+    }
+
     return err;
 }
 
@@ -130,6 +115,24 @@ static const char** parseArgs(char string[static 1])
 
 ERROR_CASE
     VecDtor(args);
+
+    return NULL;
+}
+
+static void* poller([[maybe_unused]] void* arg)
+{
+    ERROR_CHECKING();
+
+    while (atomic_load_explicit(&running, memory_order_acquire))
+    {
+        int status = 0;
+        pid_t finishedPid = waitpid(-1, &status, WNOHANG);
+
+        if (finishedPid > 0)
+        {
+            atomic_fetch_sub_explicit(&currentProgramsRunningAtomic, 1, memory_order_release);
+        }
+    }
 
     return NULL;
 }
