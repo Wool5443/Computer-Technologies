@@ -119,7 +119,7 @@ ERROR_CASE
     return NULL;
 }
 
-static void* poller([[maybe_unused]] void* arg)
+static void* poller(UNUSED void* arg)
 {
     ERROR_CHECKING();
 

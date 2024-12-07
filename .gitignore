@@ -1,7 +1,5 @@
-.cache
-build
-*.tar.gz
-a
-b
-c
-d
+.cache/
+build/
+ToBackup/
+ToBackup2/
+ToBackupStorage/

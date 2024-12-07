@@ -1,7 +1,7 @@
 #ifndef RUNSIM_H
 #define RUNSIM_H
 
-#include "Logger.h"
+#include "Error.h"
 
 ErrorCode RunSim(size_t maxPrograms);
 
