@@ -19,7 +19,9 @@
 #define SEM_TABLE_MUTEX "/semTableMutex"
 
 static const int SEM_MODE = 0666;
-static const int DRY_TIME = 5;
+static const int DRY_TIME = 0;
+
+static const size_t PIPE_SIZE = sizeof(bool);
 
 typedef struct
 {
@@ -55,8 +57,8 @@ static void sigintHandler(UNUSED int signum);
 
 static ResultEntryList parseFile(const char filePath[static 1]);
 
-static void washer(OrderList orders, DishList dishes, unsigned tableLimit, int* doneWashingfd);
-static void dryer(DishList dishes, unsigned tableLimit, int* doneWashingfd);
+static void washer(OrderList orders, DishList dishes, unsigned tableLimit, int pipefd[static 1]);
+static void dryer(DishList dishes, unsigned tableLimit, int pipefd[static 1]);
 
 ErrorCode RunRestaurant(const char ordersFilePath[static 1], const char timeTableFilePath[static 1])
 {
@@ -75,6 +77,9 @@ ErrorCode RunRestaurant(const char ordersFilePath[static 1], const char timeTabl
 
     int sharedfd = -1;
 
+    int washerPipe[2] = {};
+    int dryerPipe[2] = {};
+
     sem_t* semTableMutex = NULL;
     sem_t* semFreeSpace = NULL;
     sem_t* semWetDishes = NULL;
@@ -86,12 +91,15 @@ ErrorCode RunRestaurant(const char ordersFilePath[static 1], const char timeTabl
     }
     tableLimit = atoi(tableLimitStr);
 
-    int doneWashingfd[2] = {};
-    if (pipe(doneWashingfd) == -1)
+    if (pipe(washerPipe) == -1)
     {
         HANDLE_LINUX_ERROR("Failed to pipe: %s");
     }
-    if (fcntl(doneWashingfd[0], F_SETFL, fcntl(doneWashingfd[0], F_GETFL) | O_NONBLOCK))
+    if (pipe(dryerPipe) == -1)
+    {
+        HANDLE_LINUX_ERROR("Failed to pipe: %s");
+    }
+    if (fcntl(dryerPipe[0], F_SETFL, fcntl(dryerPipe[0], F_GETFL) | O_NONBLOCK))
     {
         HANDLE_LINUX_ERROR("Failed to fcntl read pipe: %s");
     }
@@ -175,7 +183,8 @@ ErrorCode RunRestaurant(const char ordersFilePath[static 1], const char timeTabl
     }
     else if (washerPid == 0)
     {
-        washer(orders, dishes, tableLimit, doneWashingfd);
+        washer(orders, dishes, tableLimit, washerPipe);
+        goto LOCAL_CLEANUP;
     }
 
     pid_t dryerPid = fork();
@@ -186,27 +195,46 @@ ErrorCode RunRestaurant(const char ordersFilePath[static 1], const char timeTabl
     }
     else if (dryerPid == 0)
     {
-        dryer(dishes, tableLimit, doneWashingfd);
+        dryer(dishes, tableLimit, dryerPipe);
+        goto LOCAL_CLEANUP;
+    }
+
+    bool done = false;
+    if (read(washerPipe[0], &done, PIPE_SIZE) == -1)
+    {
+        HANDLE_LINUX_ERROR("Failed to read from washer: %s");
+    }
+
+    if (write(dryerPipe[1], &done, PIPE_SIZE) == -1)
+    {
+        HANDLE_LINUX_ERROR("Failed to write to dryer: %s");
     }
 
     wait(NULL);
-    wait(NULL);
 
 ERROR_CASE
+    if (sharedfd != -1) shm_unlink(SHM_NAME);
+    if (semTableMutex) sem_unlink(SEM_TABLE_MUTEX);
+    if (semFreeSpace) sem_unlink(SEM_FREE_SPACE);
+    if (semWetDishes) sem_unlink(SEM_WET_DISHES);
+
+LOCAL_CLEANUP:
+    if (table) munmap(GET_HEADER(table), VecCapacity(table) * sizeof(*table) + sizeof(VHeader_));
+
     VecDtor(orders);
     VecDtor(dishes);
     StringDtor(&ordersBuffer);
     StringDtor(&dishesBuffer);
 
-    if (sharedfd != -1) shm_unlink(SHM_NAME);
-    if (table) munmap(GET_HEADER(table), VecCapacity(table) * sizeof(*table) + sizeof(VHeader_));
-    if (semTableMutex) sem_unlink(SEM_TABLE_MUTEX);
-    if (semFreeSpace) sem_unlink(SEM_FREE_SPACE);
-    if (semWetDishes) sem_unlink(SEM_WET_DISHES);
-    if (doneWashingfd[0])
+    if (washerPipe[0])
     {
-        close(doneWashingfd[0]);
-        close(doneWashingfd[0]);
+        close(washerPipe[0]);
+        close(washerPipe[0]);
+    }
+    if (dryerPipe[0])
+    {
+        close(dryerPipe[0]);
+        close(dryerPipe[0]);
     }
 
     return err;
@@ -282,13 +310,13 @@ size_t findDishTime(DishList dishes, const char* name)
     return 0;
 }
 
-static void washer(OrderList orders, DishList dishes, unsigned tableLimit, int* doneWashingfd)
+static void washer(OrderList orders, DishList dishes, unsigned tableLimit, int pipefd[static 1])
 {
     ERROR_CHECKING();
 
     assert(orders);
     assert(dishes);
-    assert(doneWashingfd);
+    assert(pipefd);
 
     int sharedfd = -1;
     sem_t* semTableMutex = NULL;
@@ -296,7 +324,7 @@ static void washer(OrderList orders, DishList dishes, unsigned tableLimit, int* 
     sem_t* semWetDishes = NULL;
     Table table = {};
 
-    if (close(doneWashingfd[0]) == -1)
+    if (close(pipefd[0]) == -1)
     {
         HANDLE_LINUX_ERROR("Failed to close read pipe: %s");
     }
@@ -358,11 +386,11 @@ static void washer(OrderList orders, DishList dishes, unsigned tableLimit, int* 
     }
 
     bool done = true;
-    if (write(doneWashingfd[1], &done, sizeof(done)) == -1)
+    if (write(pipefd[1], &done, sizeof(done)) == -1)
     {
         HANDLE_LINUX_ERROR("Failed to write to pipe: %s");
     }
-    if (close(doneWashingfd[1]) == -1)
+    if (close(pipefd[1]) == -1)
     {
         HANDLE_LINUX_ERROR("Failed to close write pipe: %s");
     }
@@ -375,12 +403,12 @@ ERROR_CASE
     if (semWetDishes) sem_close(semWetDishes);
 }
 
-static void dryer(DishList dishes, unsigned tableLimit, int* doneWashingfd)
+static void dryer(DishList dishes, unsigned tableLimit, int pipefd[static 1])
 {
     ERROR_CHECKING();
 
     assert(dishes);
-    assert(doneWashingfd);
+    assert(pipefd);
 
     int sharedfd = -1;
     sem_t* semTableMutex = NULL;
@@ -388,9 +416,9 @@ static void dryer(DishList dishes, unsigned tableLimit, int* doneWashingfd)
     sem_t* semWetDishes = NULL;
     Table table = {};
 
-    if (close(doneWashingfd[1]) == -1)
+    if (close(pipefd[1]) == -1)
     {
-        HANDLE_LINUX_ERROR("Failed to close write pipe[%d]: %s", doneWashingfd[1]);
+        HANDLE_LINUX_ERROR("Failed to close write pipe[%d]: %s", pipefd[1]);
     }
 
     sharedfd = shm_open(SHM_NAME, O_RDWR, 0666);
@@ -434,7 +462,7 @@ static void dryer(DishList dishes, unsigned tableLimit, int* doneWashingfd)
     {
         bool done = false;
 
-        if (read(doneWashingfd[0], &done, sizeof(done)) == -1)
+        if (read(pipefd[0], &done, sizeof(done)) == -1)
         {
             if (errno != EAGAIN)
             {
@@ -444,7 +472,7 @@ static void dryer(DishList dishes, unsigned tableLimit, int* doneWashingfd)
         else
         {
             running = false;
-            if (close(doneWashingfd[0]) == -1)
+            if (close(pipefd[0]) == -1)
             {
                 HANDLE_LINUX_ERROR("Faile to close read pipe: %s");
             }
