@@ -1,2 +1,2 @@
 add_subdirectory(Runsim)
-add_subdirectory(Restaraunt)
+add_subdirectory(Restaurant)

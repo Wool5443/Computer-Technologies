@@ -184,7 +184,7 @@ ErrorCode RunRestaurant(const char ordersFilePath[static 1], const char timeTabl
     {
         HANDLE_LINUX_ERROR("Failed to fork washer: %s");
     }
-    else if (dryerPid  == 0)
+    else if (dryerPid == 0)
     {
         dryer(dishes, tableLimit, doneWashingfd);
     }
@@ -453,17 +453,14 @@ static void dryer(DishList dishes, unsigned tableLimit, int* doneWashingfd)
         sem_wait(semWetDishes);
 
         sem_wait(semTableMutex);
-        while (VecSize(table) > 0)
-        {
-            const char* name = VecPop(table);
-            sem_post(semTableMutex);
+        const char* name = VecPop(table);
+        sem_post(semTableMutex);
 
-            fprintf(stdout, "Drying %s\n", name);
-            sleep(DRY_TIME);
-            fprintf(stdout, "Dried %s\n", name);
+        fprintf(stdout, "Drying %s\n", name);
+        sleep(DRY_TIME);
+        fprintf(stdout, "Dried %s\n", name);
 
-            sem_post(semFreeSpace);
-        }
+        sem_post(semFreeSpace);
     }
 
 ERROR_CASE
