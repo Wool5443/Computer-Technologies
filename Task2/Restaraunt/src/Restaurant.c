@@ -13,12 +13,6 @@
 #include "Vector.h"
 #include "String.h"
 
-#define HANDLE_LINUX_ERROR(...)                                             \
-    int ern = errno;                                                        \
-    err = ERROR_LINUX;                                                      \
-    LogError(__VA_ARGS__, strerror(ern));                                   \
-    ERROR_LEAVE()
-
 #define SHM_NAME "/tableSharedMem"
 #define SEM_FREE_SPACE "/semFreeSpace"
 #define SEM_WET_DISHES "/semWetDishes"
