@@ -1,6 +1,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <semaphore.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -56,6 +57,8 @@ typedef struct
 
 typedef const char** Table;
 
+static void sigintHandler(UNUSED int signum);
+
 static ResultEntryList parseFile(const char filePath[static 1]);
 
 static void washer(OrderList orders, DishList dishes, unsigned tableLimit, int* doneWashingfd);
@@ -66,6 +69,8 @@ ErrorCode RunRestaurant(const char ordersFilePath[static 1], const char timeTabl
     ERROR_CHECKING();
 
     assert(ordersFilePath);
+
+    signal(SIGINT, sigintHandler);
 
     unsigned tableLimit = 0;
     Table table = {};
@@ -473,4 +478,14 @@ ERROR_CASE
     if (semTableMutex) sem_close(semTableMutex);
     if (semFreeSpace) sem_close(semFreeSpace);
     if (semWetDishes) sem_close(semWetDishes);
+}
+
+static void sigintHandler(UNUSED int signum)
+{
+    shm_unlink(SHM_NAME);
+    sem_unlink(SEM_TABLE_MUTEX);
+    sem_unlink(SEM_FREE_SPACE);
+    sem_unlink(SEM_WET_DISHES);
+
+    exit(0);
 }
