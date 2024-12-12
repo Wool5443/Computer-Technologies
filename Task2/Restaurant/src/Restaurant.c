@@ -484,9 +484,9 @@ static void dryer(DishList dishes, unsigned tableLimit, int pipefd[static 1])
         const char* name = VecPop(table);
         sem_post(semTableMutex);
 
-        fprintf(stdout, "Drying %s\n", name);
+        fprintf(stdout, "%20sDrying %s\n", "", name);
         sleep(DRY_TIME);
-        fprintf(stdout, "Dried %s\n", name);
+        fprintf(stdout, "%20sDried %s\n", "", name);
 
         sem_post(semFreeSpace);
     }
