@@ -22,7 +22,8 @@ int main(int argc, const char* argv[])
         break;
     default:
         err = ERROR_BAD_ARGS;
-        LogError();
+        fprintf(stdout, "Usage: to backup: %s <folder to backup> <folder for storage>\n", argv[0]);
+        fprintf(stdout, "or to restore data: %s <folder for storage> \n", argv[0]);
         break;
     }
 
