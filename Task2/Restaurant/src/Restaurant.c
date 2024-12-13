@@ -164,13 +164,13 @@ ErrorCode RunRestaurant(const char ordersFilePath[static 1], const char timeTabl
     }
 
     semTableMutex = sem_open(SEM_TABLE_MUTEX, O_CREAT | O_EXCL, SEM_MODE, 1);
-    if (!semTableMutex )
+    if (!semTableMutex)
     {
         HANDLE_LINUX_ERROR("Failed to open %s: %s", SEM_TABLE_MUTEX);
     }
 
     semWetDishes = sem_open(SEM_WET_DISHES, O_CREAT | O_EXCL, SEM_MODE, 0);
-    if (!semWetDishes )
+    if (!semWetDishes)
     {
         HANDLE_LINUX_ERROR("Failed to open %s: %s", SEM_WET_DISHES);
     }
@@ -273,11 +273,7 @@ static ResultEntryList parseFile(const char filePath[static 1])
         Entry entry = { contentPtr, number };
         contentPtr = colon + numberLength + 2;
 
-        if ((err = VecAdd(entries, entry)))
-        {
-            LogError("Error adding entry");
-            ERROR_LEAVE();
-        }
+        CHECK_ERROR(VecAdd(entries, entry), "Error adding entry %s:%zu", entry.name, entry.number);
     }
 
     return (ResultEntryList)
@@ -474,7 +470,7 @@ static void dryer(DishList dishes, unsigned tableLimit, int pipefd[static 1])
             running = false;
             if (close(pipefd[0]) == -1)
             {
-                HANDLE_LINUX_ERROR("Faile to close read pipe: %s");
+                HANDLE_LINUX_ERROR("Failed to close read pipe: %s");
             }
         }
 
