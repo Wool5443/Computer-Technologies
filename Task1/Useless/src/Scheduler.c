@@ -15,7 +15,7 @@ void* execCommandThreadFunc(void* arg)
 
     sleep(cmd.delay);
 
-    pid_t pid = fork();
+    pid_t pid = vfork();
 
     if (pid == 0)
     {

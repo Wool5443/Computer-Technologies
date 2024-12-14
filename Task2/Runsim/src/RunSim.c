@@ -48,12 +48,12 @@ ErrorCode RunSim(size_t maxPrograms)
             continue;
         }
 
-        pid_t pid = fork();
+        pid_t pid = vfork();
         if (pid == -1)
         {
             int ern = errno;
             err = ERROR_LINUX;
-            LogError("fork error: %s", strerror(ern));
+            LogError("vfork error: %s", strerror(ern));
             VecDtor(args);
             ERROR_LEAVE();
         }

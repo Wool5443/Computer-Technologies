@@ -129,7 +129,7 @@ static void copyAndZip(FileEntry saveFile, Str storagePath)
     char* lastdirsep = strrchr(saveFileStr.data, '/'); // TODO we know length
     *lastdirsep = '\0';
 
-    pid_t copypid = fork();
+    pid_t copypid = vfork();
 
     if (copypid == 0)
     {
@@ -177,7 +177,7 @@ static void unzip(FileEntry archive)
         }
     }
 
-    pid_t mkdirpid = fork();
+    pid_t mkdirpid = vfork();
 
     if (mkdirpid == 0)
     {
@@ -192,7 +192,7 @@ static void unzip(FileEntry archive)
         return;
     }
 
-    pid_t unzipid = fork();
+    pid_t unzipid = vfork();
 
     if (unzipid == 0)
     {
@@ -210,7 +210,7 @@ static void unzip(FileEntry archive)
         return;
     }
 
-    pid_t touchpid = fork();
+    pid_t touchpid = vfork();
     if (touchpid == 0)
     {
         const char* args[] = { "touch", archive.path, NULL };
