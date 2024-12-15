@@ -100,7 +100,7 @@ static void copyAndZip(FileEntry saveFile, Str storagePath)
 
     Str saveFileStr = StrCtor(saveFile.path);
 
-    ScratchClean();
+    ScratchClear();
 
     ScratchAppendStr(storagePath);
     size_t fileNameIndex = ScratchGetSize();
@@ -150,7 +150,7 @@ static void unzip(FileEntry archive)
 {
     ERROR_CHECKING();
 
-    ScratchClean();
+    ScratchClear();
     ScratchAppend(strchr(archive.path, SLASH_REPLACE_SYMBOL));
 
     // delete .tar.gz at the end

@@ -2,8 +2,9 @@
 #define SCHEDULER_H
 
 #include <pthread.h>
+
 #include "Commands.h"
-#include "Logger.h" // IWYU pragma: keep
+#include "Logger.h"
 
 typedef struct
 {

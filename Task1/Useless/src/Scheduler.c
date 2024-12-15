@@ -1,8 +1,9 @@
+#include <assert.h>
 #include <pthread.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <assert.h>
 #include <sys/wait.h>
+#include <unistd.h>
+
 #include "Scheduler.h"
 
 time_t StartTime = 0;

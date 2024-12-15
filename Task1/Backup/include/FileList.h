@@ -2,7 +2,8 @@
 #define FILE_LIST_H
 
 #include <time.h>
-#include "Logger.h" // IWYU pragma: keep
+
+#include "Logger.h"
 
 #define MAX_FD 32
 
