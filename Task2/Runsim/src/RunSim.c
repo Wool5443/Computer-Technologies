@@ -51,7 +51,7 @@ ErrorCode RunSim(size_t maxPrograms)
         pid_t pid = vfork();
         if (pid == -1)
         {
-            int ern = errno;
+            UNUSED int ern = errno;
             err = ERROR_LINUX;
             LogError("vfork error: %s", strerror(ern));
             VecDtor(args);
@@ -61,7 +61,7 @@ ErrorCode RunSim(size_t maxPrograms)
         {
             execvp(userInput, (char**)args);
 
-            int ern = errno;
+            UNUSED int ern = errno;
             err = ERROR_LINUX;
             LogError("execvp error: %s", strerror(ern));
             VecDtor(args);

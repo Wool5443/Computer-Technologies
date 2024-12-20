@@ -3,6 +3,8 @@ set(projectName "CT")
 
 project(${projectName} C)
 
+add_compile_definitions("DISABLE_LOGGING")
+
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED true)
 
@@ -19,4 +21,3 @@ add_subdirectory(Libs/cmlib)
 add_subdirectory(Task1)
 add_subdirectory(Task2)
 
-add_compile_definitions("ENABLE_LOGGING")
