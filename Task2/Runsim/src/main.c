@@ -9,7 +9,7 @@ int main(int argc, char* argv[])
 {
     ERROR_CHECKING();
 
-    LoggerInit("log.txt");
+    LoggerInitPath("log.txt");
 
     if (argc != 2)
     {

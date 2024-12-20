@@ -7,7 +7,7 @@ int main(int argc, const char* argv[])
 {
     ERROR_CHECKING();
 
-    LoggerInit("log.txt");
+    LoggerInitPath("log.txt");
 
     if (argc != 3)
     {

@@ -87,21 +87,21 @@ ErrorCode RunRestaurant(const char ordersFilePath[static 1], const char timeTabl
     const char* tableLimitStr = getenv("TABLE_LIMIT");
     if (!tableLimitStr)
     {
-        HANDLE_ERRNO_ERROR("Failed to fetch TABLE_LIMIT: %s");
+        HANDLE_ERRNO_ERROR(ERROR_LINUX, "Failed to fetch TABLE_LIMIT: %s");
     }
     tableLimit = atoi(tableLimitStr);
 
     if (pipe(washerPipe) == -1)
     {
-        HANDLE_ERRNO_ERROR("Failed to pipe: %s");
+        HANDLE_ERRNO_ERROR(ERROR_LINUX, "Failed to pipe: %s");
     }
     if (pipe(dryerPipe) == -1)
     {
-        HANDLE_ERRNO_ERROR("Failed to pipe: %s");
+        HANDLE_ERRNO_ERROR(ERROR_LINUX, "Failed to pipe: %s");
     }
     if (fcntl(dryerPipe[0], F_SETFL, fcntl(dryerPipe[0], F_GETFL) | O_NONBLOCK))
     {
-        HANDLE_ERRNO_ERROR("Failed to fcntl read pipe: %s");
+        HANDLE_ERRNO_ERROR(ERROR_LINUX, "Failed to fcntl read pipe: %s");
     }
 
     ResultEntryList ordersResult = parseFile(ordersFilePath);
@@ -123,17 +123,17 @@ ErrorCode RunRestaurant(const char ordersFilePath[static 1], const char timeTabl
     sharedfd = shm_open(SHM_NAME, O_CREAT | O_RDWR, 0666);
     if (sharedfd == -1)
     {
-        HANDLE_ERRNO_ERROR("Failed to open shared memory %s: %s", SHM_NAME);
+        HANDLE_ERRNO_ERROR(ERROR_LINUX, "Failed to open shared memory %s: %s", SHM_NAME);
     }
     if (ftruncate(sharedfd, tableLimit * sizeof(*table) + sizeof(VHeader_)) == -1)
     {
-        HANDLE_ERRNO_ERROR("Failed to truncate: %s");
+        HANDLE_ERRNO_ERROR(ERROR_LINUX, "Failed to truncate: %s");
     }
 
     table = mmap(NULL, tableLimit * sizeof(*table) + sizeof(VHeader_), PROT_READ | PROT_WRITE, MAP_SHARED, sharedfd, 0);
     if (!table)
     {
-        HANDLE_ERRNO_ERROR("Failed to mmap: %s");
+        HANDLE_ERRNO_ERROR(ERROR_LINUX, "Failed to mmap: %s");
     }
     else
     {
@@ -147,39 +147,39 @@ ErrorCode RunRestaurant(const char ordersFilePath[static 1], const char timeTabl
     if (close(sharedfd) == -1)
     {
         sharedfd = -1;
-        HANDLE_ERRNO_ERROR("Failed to close sharedfd: %s");
+        HANDLE_ERRNO_ERROR(ERROR_LINUX, "Failed to close sharedfd: %s");
     }
     sharedfd = -1;
 
     semFreeSpace = sem_open(SEM_FREE_SPACE, O_CREAT | O_EXCL, SEM_MODE, tableLimit);
     if (!semFreeSpace)
     {
-        HANDLE_ERRNO_ERROR("Failed to open %s: %s", SEM_FREE_SPACE);
+        HANDLE_ERRNO_ERROR(ERROR_LINUX, "Failed to open %s: %s", SEM_FREE_SPACE);
     }
 
     int semval = 0;
     if (sem_getvalue(semFreeSpace, &semval) == -1)
     {
-        HANDLE_ERRNO_ERROR("Failed sem_getvalue: %s");
+        HANDLE_ERRNO_ERROR(ERROR_LINUX, "Failed sem_getvalue: %s");
     }
 
     semTableMutex = sem_open(SEM_TABLE_MUTEX, O_CREAT | O_EXCL, SEM_MODE, 1);
     if (!semTableMutex)
     {
-        HANDLE_ERRNO_ERROR("Failed to open %s: %s", SEM_TABLE_MUTEX);
+        HANDLE_ERRNO_ERROR(ERROR_LINUX, "Failed to open %s: %s", SEM_TABLE_MUTEX);
     }
 
     semWetDishes = sem_open(SEM_WET_DISHES, O_CREAT | O_EXCL, SEM_MODE, 0);
     if (!semWetDishes)
     {
-        HANDLE_ERRNO_ERROR("Failed to open %s: %s", SEM_WET_DISHES);
+        HANDLE_ERRNO_ERROR(ERROR_LINUX, "Failed to open %s: %s", SEM_WET_DISHES);
     }
 
     pid_t washerPid = fork();
 
     if (washerPid == -1)
     {
-        HANDLE_ERRNO_ERROR("Failed to fork washer: %s");
+        HANDLE_ERRNO_ERROR(ERROR_LINUX, "Failed to fork washer: %s");
     }
     else if (washerPid == 0)
     {
@@ -191,7 +191,7 @@ ErrorCode RunRestaurant(const char ordersFilePath[static 1], const char timeTabl
 
     if (dryerPid == -1)
     {
-        HANDLE_ERRNO_ERROR("Failed to fork washer: %s");
+        HANDLE_ERRNO_ERROR(ERROR_LINUX, "Failed to fork washer: %s");
     }
     else if (dryerPid == 0)
     {
@@ -202,12 +202,12 @@ ErrorCode RunRestaurant(const char ordersFilePath[static 1], const char timeTabl
     bool done = false;
     if (read(washerPipe[0], &done, PIPE_SIZE) == -1)
     {
-        HANDLE_ERRNO_ERROR("Failed to read from washer: %s");
+        HANDLE_ERRNO_ERROR(ERROR_LINUX, "Failed to read from washer: %s");
     }
 
     if (write(dryerPipe[1], &done, PIPE_SIZE) == -1)
     {
-        HANDLE_ERRNO_ERROR("Failed to write to dryer: %s");
+        HANDLE_ERRNO_ERROR(ERROR_LINUX, "Failed to write to dryer: %s");
     }
 
     wait(NULL);
@@ -322,13 +322,13 @@ static void washer(OrderList orders, DishList dishes, unsigned tableLimit, int p
 
     if (close(pipefd[0]) == -1)
     {
-        HANDLE_ERRNO_ERROR("Failed to close read pipe: %s");
+        HANDLE_ERRNO_ERROR(ERROR_LINUX, "Failed to close read pipe: %s");
     }
 
     sharedfd = shm_open(SHM_NAME, O_RDWR, 0666);
     if (sharedfd == -1)
     {
-        HANDLE_ERRNO_ERROR("Failed to open shared memory: %s");
+        HANDLE_ERRNO_ERROR(ERROR_LINUX, "Failed to open shared memory: %s");
     }
     else
     {
@@ -339,25 +339,25 @@ static void washer(OrderList orders, DishList dishes, unsigned tableLimit, int p
 
     if (close(sharedfd) == -1)
     {
-        HANDLE_ERRNO_ERROR("Failed to open shared memory: %s");
+        HANDLE_ERRNO_ERROR(ERROR_LINUX, "Failed to open shared memory: %s");
     }
 
     semTableMutex = sem_open(SEM_TABLE_MUTEX, 0);
     if (!semTableMutex)
     {
-        HANDLE_ERRNO_ERROR("Failed to open %s: %s", SEM_TABLE_MUTEX);
+        HANDLE_ERRNO_ERROR(ERROR_LINUX, "Failed to open %s: %s", SEM_TABLE_MUTEX);
     }
 
     semFreeSpace = sem_open(SEM_FREE_SPACE, 0);
     if (!semFreeSpace )
     {
-        HANDLE_ERRNO_ERROR("Failed to open %s: %s", SEM_FREE_SPACE);
+        HANDLE_ERRNO_ERROR(ERROR_LINUX, "Failed to open %s: %s", SEM_FREE_SPACE);
     }
 
     semWetDishes = sem_open(SEM_WET_DISHES, 0);
     if (!semWetDishes )
     {
-        HANDLE_ERRNO_ERROR("Failed to open %s: %s", SEM_WET_DISHES);
+        HANDLE_ERRNO_ERROR(ERROR_LINUX, "Failed to open %s: %s", SEM_WET_DISHES);
     }
 
     for (size_t i = 0, end = VecSize(orders); i < end; i++)
@@ -384,11 +384,11 @@ static void washer(OrderList orders, DishList dishes, unsigned tableLimit, int p
     bool done = true;
     if (write(pipefd[1], &done, sizeof(done)) == -1)
     {
-        HANDLE_ERRNO_ERROR("Failed to write to pipe: %s");
+        HANDLE_ERRNO_ERROR(ERROR_LINUX, "Failed to write to pipe: %s");
     }
     if (close(pipefd[1]) == -1)
     {
-        HANDLE_ERRNO_ERROR("Failed to close write pipe: %s");
+        HANDLE_ERRNO_ERROR(ERROR_LINUX, "Failed to close write pipe: %s");
     }
 
 ERROR_CASE
@@ -414,13 +414,13 @@ static void dryer(DishList dishes, unsigned tableLimit, int pipefd[static 1])
 
     if (close(pipefd[1]) == -1)
     {
-        HANDLE_ERRNO_ERROR("Failed to close write pipe[%d]: %s", pipefd[1]);
+        HANDLE_ERRNO_ERROR(ERROR_LINUX, "Failed to close write pipe[%d]: %s", pipefd[1]);
     }
 
     sharedfd = shm_open(SHM_NAME, O_RDWR, 0666);
     if (sharedfd == -1)
     {
-        HANDLE_ERRNO_ERROR("Failed to open shared memory: %s");
+        HANDLE_ERRNO_ERROR(ERROR_LINUX, "Failed to open shared memory: %s");
     }
     else
     {
@@ -431,25 +431,25 @@ static void dryer(DishList dishes, unsigned tableLimit, int pipefd[static 1])
 
     if (close(sharedfd) == -1)
     {
-        HANDLE_ERRNO_ERROR("Failed to open shared memory: %s");
+        HANDLE_ERRNO_ERROR(ERROR_LINUX, "Failed to open shared memory: %s");
     }
 
     semTableMutex = sem_open(SEM_TABLE_MUTEX, 0);
     if (!semTableMutex)
     {
-        HANDLE_ERRNO_ERROR("Failed to open %s: %s", SEM_TABLE_MUTEX);
+        HANDLE_ERRNO_ERROR(ERROR_LINUX, "Failed to open %s: %s", SEM_TABLE_MUTEX);
     }
 
     semFreeSpace = sem_open(SEM_FREE_SPACE, 0);
     if (!semFreeSpace)
     {
-        HANDLE_ERRNO_ERROR("Failed to open %s: %s", SEM_FREE_SPACE);
+        HANDLE_ERRNO_ERROR(ERROR_LINUX, "Failed to open %s: %s", SEM_FREE_SPACE);
     }
 
     semWetDishes = sem_open(SEM_WET_DISHES, 0);
     if (!semWetDishes)
     {
-        HANDLE_ERRNO_ERROR("Failed to open %s: %s", SEM_WET_DISHES);
+        HANDLE_ERRNO_ERROR(ERROR_LINUX, "Failed to open %s: %s", SEM_WET_DISHES);
     }
 
     bool running = true;
@@ -462,7 +462,7 @@ static void dryer(DishList dishes, unsigned tableLimit, int pipefd[static 1])
         {
             if (errno != EAGAIN)
             {
-                HANDLE_ERRNO_ERROR("Failed to read from pipe: %s");
+                HANDLE_ERRNO_ERROR(ERROR_LINUX, "Failed to read from pipe: %s");
             }
         }
         else
@@ -470,7 +470,7 @@ static void dryer(DishList dishes, unsigned tableLimit, int pipefd[static 1])
             running = false;
             if (close(pipefd[0]) == -1)
             {
-                HANDLE_ERRNO_ERROR("Failed to close read pipe: %s");
+                HANDLE_ERRNO_ERROR(ERROR_LINUX, "Failed to close read pipe: %s");
             }
         }
 
