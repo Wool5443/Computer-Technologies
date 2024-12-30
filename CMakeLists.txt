@@ -12,7 +12,7 @@ set(CMAKE_C_FLAGS_DEBUG "\
 -pthread -g -D _DEBUG -ggdb3 -std=gnu17 -O0 -Wall -Wextra \
 -fsanitize=address,undefined,leak,shift,float-divide-by-zero,signed-integer-overflow\
 ")
-set(CMAKE_CXX_FLAGS_RELASE "-pthread -O3 -g -DNDEBUG -march=native -mavx512f")
+set(CMAKE_CXX_FLAGS_RELASE "-pthread -O3 -g -DNDEBUG -march=native")
 
 set(PROJECT_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 set(LIBS_ROOT ${PROJECT_ROOT}/Libs)
