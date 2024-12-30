@@ -48,7 +48,7 @@ ErrorCode RunSim(size_t maxPrograms)
             continue;
         }
 
-        pid_t pid = vfork();
+        pid_t pid = fork();
         if (pid == -1)
         {
             UNUSED int ern = errno;
