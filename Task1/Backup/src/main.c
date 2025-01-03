@@ -1,5 +1,6 @@
 #include "Backup.h"
 #include "ScratchBuf.h"
+#include "IO.h"
 
 ErrorCode RunBackup(const char* argv[]);
 ErrorCode RunRestore(const char* argv[]);
@@ -44,12 +45,12 @@ ErrorCode RunBackup(const char* argv[])
     String backupPath  = {};
     String storagePath = {};
 
-    ResultString backupPathRes = SanitizeDirectoryPath(argv[1]);
+    ResultString backupPathRes = RealPath(argv[1]);
     CHECK_ERROR(backupPathRes.errorCode);
 
     backupPath = backupPathRes.value;
 
-    ResultString storagePathRes = SanitizeDirectoryPath(argv[2]);
+    ResultString storagePathRes = RealPath(argv[2]);
     CHECK_ERROR(storagePathRes.errorCode);
     storagePath = storagePathRes.value;
 
@@ -70,7 +71,7 @@ ErrorCode RunRestore(const char* argv[])
 
     String storagePath = {};
 
-    ResultString storagePathRes = SanitizeDirectoryPath(argv[1]);
+    ResultString storagePathRes = RealPath(argv[1]);
     CHECK_ERROR(storagePathRes.errorCode);
     storagePath = storagePathRes.value;
 

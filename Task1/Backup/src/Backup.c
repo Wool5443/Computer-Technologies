@@ -69,29 +69,6 @@ ERROR_CASE
     return err;
 }
 
-ResultString SanitizeDirectoryPath(const char path[static 1])
-{
-    ERROR_CHECKING();
-
-    assert(path);
-
-    char goodPath[PATH_MAX] = "";
-
-    if (!realpath(path, goodPath))
-    {
-        err = ERROR_BAD_FOLDER;
-        LogError();
-        return (ResultString){ {}, err };
-    }
-
-    size_t size = strlen(goodPath);
-
-    goodPath[size] = '/';
-    size++;
-
-    return StringCtorFromStr(StrCtorSize(goodPath, size));
-}
-
 static void copyAndZip(FileEntry saveFile, Str storagePath)
 {
     ERROR_CHECKING();
