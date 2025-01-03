@@ -15,7 +15,7 @@ typedef struct
 
 typedef FileEntry* FileList;
 
-DECLARE_RESULT(FileList);
+DECLARE_RESULT_HEADER(FileList);
 
 ResultFileList  FileListCtor(const char dir[static 1]);
 void            FileListDtor(FileList list);

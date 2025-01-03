@@ -69,29 +69,6 @@ ERROR_CASE
     return err;
 }
 
-ResultString SanitizeDirectoryPath(const char path[static 1])
-{
-    ERROR_CHECKING();
-
-    assert(path);
-
-    char goodPath[PATH_MAX] = "";
-
-    if (!realpath(path, goodPath))
-    {
-        err = ERROR_BAD_FOLDER;
-        LogError();
-        return (ResultString){ {}, err };
-    }
-
-    size_t size = strlen(goodPath);
-
-    goodPath[size] = '/';
-    size++;
-
-    return StringCtorFromStr(StrCtorSize(goodPath, size));
-}
-
 static void copyAndZip(FileEntry saveFile, Str storagePath)
 {
     ERROR_CHECKING();
@@ -101,14 +78,9 @@ static void copyAndZip(FileEntry saveFile, Str storagePath)
     Str saveFileStr = StrCtor(saveFile.path);
 
     ScratchClear();
+    ScratchPrintf("%s%s.tar.gz", storagePath.data, saveFile.path);
 
-    ScratchAppendStr(storagePath);
-    size_t fileNameIndex = ScratchGetSize();
-    ScratchAppendStr(saveFileStr);
-    ScratchAppend(".tar.gz");
-
-    char* slash = strchr(&ScratchGet()[fileNameIndex], '/');
-
+    char* slash = strchr(&ScratchGet()[storagePath.size], '/');
     while (slash)
     {
         *slash = SLASH_REPLACE_SYMBOL;
@@ -129,7 +101,7 @@ static void copyAndZip(FileEntry saveFile, Str storagePath)
     char* lastdirsep = strrchr(saveFileStr.data, '/'); // TODO we know length
     *lastdirsep = '\0';
 
-    pid_t copypid = vfork();
+    pid_t copypid = fork();
 
     if (copypid == 0)
     {
@@ -138,7 +110,7 @@ static void copyAndZip(FileEntry saveFile, Str storagePath)
         const char* args[] = { "tar", "-czf", ScratchGet(), "-C", saveFileStr.data, lastdirsep + 1, NULL };
         execvp("tar", (char**)args);
     }
-    else if (copypid == LINUX_ERROR)
+    else if (copypid == -1)
     {
         err = ERROR_LINUX;
         LogError();
@@ -177,7 +149,7 @@ static void unzip(FileEntry archive)
         }
     }
 
-    pid_t mkdirpid = vfork();
+    pid_t mkdirpid = fork();
 
     if (mkdirpid == 0)
     {
@@ -185,14 +157,14 @@ static void unzip(FileEntry archive)
         const char* args[] = { "mkdir", "-p", ScratchGet(), NULL };
         execvp("mkdir", (char**)args);
     }
-    else if (mkdirpid == LINUX_ERROR)
+    else if (mkdirpid == -1)
     {
         err = LINUX_ERROR;
         LogError();
         return;
     }
 
-    pid_t unzipid = vfork();
+    pid_t unzipid = fork();
 
     if (unzipid == 0)
     {
@@ -202,24 +174,32 @@ static void unzip(FileEntry archive)
         *lastSlash = '\0';
         const char* args[] = { "tar" , "-xzf", archive.path, "-C", ScratchGet(), NULL };
         execvp("tar", (char**)args);
+
+        err = ERROR_LINUX;
+        LogError("Failed execvp: %s", strerror(errno));
+        return;
     }
-    else if (unzipid == LINUX_ERROR)
+    else if (unzipid == -1)
     {
-        err = LINUX_ERROR;
-        LogError();
+        err = ERROR_LINUX;
+        LogError("Failed fork: %s", strerror(errno));
         return;
     }
 
-    pid_t touchpid = vfork();
+    pid_t touchpid = fork();
     if (touchpid == 0)
     {
         const char* args[] = { "touch", archive.path, NULL };
         execvp("touch", (char**)args);
+
+        err = ERROR_LINUX;
+        LogError("Failed execvp: %s", strerror(errno));
+        return;
     }
-    else if (touchpid == LINUX_ERROR)
+    else if (touchpid == -1)
     {
         err = ERROR_LINUX;
-        LogError();
+        LogError("Failed fork: %s", strerror(errno));
         return;
     }
 }
