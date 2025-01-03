@@ -6,6 +6,8 @@
 
 #include "InputFiles.h"
 
+DECLARE_RESULT_SOURCE(CommandList);
+
 size_t countLines(const char text[static 1]);
 size_t fileSize(int fd);
 

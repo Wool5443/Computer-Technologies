@@ -5,6 +5,8 @@
 #include "FileList.h"
 #include "Vector.h"
 
+DECLARE_RESULT_SOURCE(FileList);
+
 int fileListFn(const char *fpath, [[maybe_unused]] const struct stat *sb,
                int typeflag, [[maybe_unused]] struct FTW *ftwbuf);
 

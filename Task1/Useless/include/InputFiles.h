@@ -4,7 +4,7 @@
 #include "Commands.h"
 #include "Logger.h"
 
-DECLARE_RESULT(CommandList);
+DECLARE_RESULT_HEADER(CommandList);
 
 ResultCommandList CommandListCtor(const char filePath[static 1]);
 void              CommandListDtor(CommandList list[static 1]);

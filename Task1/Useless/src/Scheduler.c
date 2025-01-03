@@ -6,6 +6,8 @@
 
 #include "Scheduler.h"
 
+DECLARE_RESULT_SOURCE(Scheduler);
+
 time_t StartTime = 0;
 
 void* execCommandThreadFunc(void* arg)
