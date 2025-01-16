@@ -288,7 +288,7 @@ ERROR_CASE
     StringDtor(&content);
     VecDtor(entries);
 
-    return (ResultEntryList){ {}, err, {} };
+    return (ResultEntryList){ .errorCode = err };
 }
 
 size_t findDishTime(DishList dishes, const char* name)
