@@ -273,7 +273,7 @@ static ResultEntryList parseFile(const char filePath[static 1])
         Entry entry = { contentPtr, number };
         contentPtr = colon + numberLength + 2;
 
-        CHECK_ERROR(VecAdd(entries, entry), "Error adding entry %s:%zu", entry.name, entry.number);
+        CHECK_ERROR_LOG(VecAdd(entries, entry), "Error adding entry %s:%zu", entry.name, entry.number);
     }
 
     return (ResultEntryList)

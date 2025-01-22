@@ -97,11 +97,11 @@ static const char** parseArgs(char string[static 1])
 
     while (current)
     {
-        CHECK_ERROR(VecAdd(args, current), "Error pushing %s to vector", current);
+        CHECK_ERROR_LOG(VecAdd(args, current), "Error pushing %s to vector", current);
         current = strtok(NULL, " ");
     }
 
-    CHECK_ERROR(VecAdd(args, NULL), "Error pushing NULL to vector");
+    CHECK_ERROR_LOG(VecAdd(args, NULL), "Error pushing NULL to vector");
 
     return args;
 
